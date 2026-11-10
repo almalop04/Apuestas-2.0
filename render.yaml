@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: apuestas-valor
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: ODDS_API_KEY
+        sync: false
+      - key: API_FOOTBALL_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: REFRESH_TOKEN
+        generateValue: true
+      - key: CACHE_HOURS
+        value: "24"
+      - key: MIN_EDGE
+        value: "0.02"
+      - key: MARKET_WEIGHT
+        value: "0.7"

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apuestas con valor · Picks de la semana</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <div class="brand">
+        <span class="logo">◆</span>
+        <div>
+          <h1>Picks con valor</h1>
+          <p class="sub">Las selecciones donde la cuota paga más que la probabilidad estimada</p>
+        </div>
+      </div>
+      <div class="meta" id="meta">Cargando…</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div id="banner"></div>
+
+    <section class="summary" id="summary"></section>
+
+    <section id="picks" class="picks">
+      <div class="loading">Analizando partidos y cuotas…</div>
+    </section>
+
+    <section id="discarded"></section>
+
+    <details class="explain">
+      <summary>¿Cómo se calcula?</summary>
+      <ol>
+        <li><b>Probabilidad de mercado:</b> se toma la cuota de Pinnacle (la casa más eficiente) y se le quita el margen. Si no cotiza, se usa el consenso de todas las casas.</li>
+        <li><b>Modelo de estadísticas:</b> goles a favor y en contra en casa y fuera, ajustados por la forma de los últimos 5 partidos → goles esperados → distribución de Poisson.</li>
+        <li><b>Probabilidad final</b> = mezcla de ambas (por defecto 70 % mercado / 30 % modelo).</li>
+        <li><b>Valor</b> = probabilidad × mejor cuota disponible − 1. Solo se muestran las que superan el umbral mínimo, una por partido.</li>
+        <li><b>Stake</b> = Kelly fraccionado (¼), como porcentaje de tu bank.</li>
+        <li><b>Analista IA:</b> el agente de Google Antigravity busca bajas, rotaciones y noticias de los 15 mejores candidatos y decide mantener, reducir o descartar, con un ajuste máximo de ±3 puntos de probabilidad.</li>
+      </ol>
+      <p class="muted">Una ventaja positiva es una estimación, no una garantía. Apuesta con cabeza y solo lo que puedas permitirte perder. +18.</p>
+    </details>
+
+    <details class="admin">
+      <summary>Forzar actualización</summary>
+      <form id="refresh-form">
+        <input type="password" id="token" placeholder="REFRESH_TOKEN" autocomplete="off">
+        <button type="submit">Actualizar ahora</button>
+      </form>
+      <p class="muted">Gasta créditos de las APIs. Normalmente no hace falta: los datos se renuevan solos cada 24 h.</p>
+    </details>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
