@@ -17,13 +17,13 @@ def _i(name: str, default: int) -> int:
         return default
 
 
-# Ligas analizadas: clave en The Odds API + id de liga en API-Football
+# Ligas analizadas: clave en The Odds API + id en API-Football + id en footballdata.io
 LEAGUES = [
-    {"key": "soccer_spain_la_liga", "name": "LaLiga", "af_id": 140},
-    {"key": "soccer_epl", "name": "Premier League", "af_id": 39},
-    {"key": "soccer_italy_serie_a", "name": "Serie A", "af_id": 135},
-    {"key": "soccer_germany_bundesliga", "name": "Bundesliga", "af_id": 78},
-    {"key": "soccer_france_ligue_one", "name": "Ligue 1", "af_id": 61},
+    {"key": "soccer_spain_la_liga", "name": "LaLiga", "af_id": 140, "fd_id": 10},
+    {"key": "soccer_epl", "name": "Premier League", "af_id": 39, "fd_id": 15},
+    {"key": "soccer_italy_serie_a", "name": "Serie A", "af_id": 135, "fd_id": None},
+    {"key": "soccer_germany_bundesliga", "name": "Bundesliga", "af_id": 78, "fd_id": None},
+    {"key": "soccer_france_ligue_one", "name": "Ligue 1", "af_id": 61, "fd_id": None},
 ]
 
 # Casas que no se usan para apostar (exchanges con comisión)
@@ -34,6 +34,11 @@ EXCLUDED_BOOKS = {"betfair_ex_eu", "betfair_ex_uk", "matchbook", "smarkets"}
 class Settings:
     odds_api_key: str = field(default_factory=lambda: os.getenv("ODDS_API_KEY", ""))
     api_football_key: str = field(default_factory=lambda: os.getenv("API_FOOTBALL_KEY", ""))
+    footballdata_io_key: str = field(
+        default_factory=lambda: os.getenv("FOOTBALLDATA_IO_KEY")
+        or os.getenv("API_KEY_FOOTBALDATA")
+        or ""
+    )
     refresh_token: str = field(default_factory=lambda: os.getenv("REFRESH_TOKEN", ""))
     regions: str = field(default_factory=lambda: os.getenv("ODDS_REGIONS", "eu"))
     markets: str = field(default_factory=lambda: os.getenv("ODDS_MARKETS", "h2h,totals"))

@@ -12,7 +12,7 @@ from . import analyst, demo_data
 from .config import LEAGUES, Settings
 from .model import best_prices, kelly_stake, market_probabilities, poisson_probs
 from .odds import fetch_odds
-from .stats import build_ratings, expected_goals, fetch_standings, match_team
+from .stats import build_ratings, expected_goals, fetch_standings, fetch_standings_footballdata, match_team
 
 log = logging.getLogger("picks")
 CACHE_FILE = Path("/tmp/picks_cache.json")
@@ -121,6 +121,11 @@ def generate(s: Settings) -> dict:
             ratings = None
             if s.demo:
                 ratings = build_ratings(demo_data.standings(league))
+            elif s.footballdata_io_key and league.get("fd_id"):
+                try:
+                    ratings = build_ratings(fetch_standings_footballdata(client, league["fd_id"], s.footballdata_io_key))
+                except Exception as e:  # noqa: BLE001
+                    warnings.append(f"{league['name']}: error con footballdata.io ({e})")
             elif s.api_football_key:
                 try:
                     ratings = build_ratings(fetch_standings(client, league["af_id"], s.api_football_key))

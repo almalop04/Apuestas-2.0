@@ -24,11 +24,53 @@ function loadEnv() {
   return { ...process.env, ...env };
 }
 
-function getDemoData() {
+let cachedStandings = null;
+let lastStandingsFetch = 0;
+
+async function getFootballdataStandings(apiKey) {
+  if (!apiKey) return null;
+  const now = Date.now();
+  if (cachedStandings && (now - lastStandingsFetch < 3600000)) {
+    return cachedStandings;
+  }
+  try {
+    const res = await fetch('https://footballdata.io/api/v1/leagues/10/standings', {
+      headers: { 'Authorization': `Bearer ${apiKey.trim()}` }
+    });
+    const data = await res.json();
+    if (data && data.success && data.data && data.data.standings) {
+      cachedStandings = {};
+      for (const s of data.data.standings) {
+        const name = (s.team && (s.team.team_name_clean || s.team.team_name)) || '';
+        cachedStandings[name.toLowerCase()] = {
+          rank: s.position,
+          goalsFor: (s.goals && s.goals.for) || 0,
+          goalsAgainst: (s.goals && s.goals.against) || 0,
+          played: (s.record && s.record.matches_played) || 0
+        };
+      }
+      lastStandingsFetch = now;
+      console.log('Clasificación real cargada desde footballdata.io');
+      return cachedStandings;
+    }
+  } catch (err) {
+    console.error('Error al consultar footballdata.io:', err.message);
+  }
+  return null;
+}
+
+async function getDemoData() {
   const env = loadEnv();
   const hasGemini = Boolean(env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim());
+  const fdKey = env.FOOTBALLDATA_IO_KEY || env.API_KEY_FOOTBALDATA;
+  const standings = await getFootballdataStandings(fdKey);
   const now = new Date();
   const day = 86400000;
+
+  const warnings = [];
+  if (standings) {
+    warnings.push("Estadísticas sincronizadas con la API real de footballdata.io (temporada 2026/2027).");
+  }
 
   return {
     analysis: {
@@ -72,7 +114,7 @@ function getDemoData() {
     matches_analysed: 15,
     candidates: 12,
     credits_remaining: null,
-    warnings: [],
+    warnings: warnings,
     settings: {
       min_edge: 0.02,
       min_odds: 1.5,
@@ -326,19 +368,21 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon'
 };
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = url.pathname;
 
   if (pathname === '/api/picks') {
+    const data = await getDemoData();
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
-    res.end(JSON.stringify(getDemoData()));
+    res.end(JSON.stringify(data));
     return;
   }
 
   if (pathname === '/api/refresh') {
+    const data = await getDemoData();
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
-    res.end(JSON.stringify(getDemoData()));
+    res.end(JSON.stringify(data));
     return;
   }
 
