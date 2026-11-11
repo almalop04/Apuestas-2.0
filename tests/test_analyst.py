@@ -45,16 +45,18 @@ def test_antigravity_flow_mocked(monkeypatch):
     class Interactions:
         def create(self, **kw):
             assert kw["agent"] == "antigravity-preview-05-2026" and kw["background"] is True
+            assert kw["api_version"] == "v1beta"
             assert "Candidatos" in kw["input"]
             return Inter("in_progress")
 
-        def get(self, _id):
+        def get(self, _id, api_version=None):
+            assert api_version == "v1beta"
             calls["get"] += 1
             return Inter("completed", '```json\n[{"id":"c1","verdict":"mantener","prob_adjust":0.01,"reason":"Sin bajas."}]\n```')
 
     class Client:
-        def __init__(self, api_key):
-            assert api_key == "k"
+        def __init__(self, api_key, http_options=None):
+            assert api_key == "k" and http_options == {"api_version": "v1beta"}
             self.interactions = Interactions()
 
     fake = types.ModuleType("google.genai")
@@ -113,3 +115,13 @@ def test_all_batches_failed_raises(monkeypatch):
         assert False
     except RuntimeError as e:
         assert "caído" in str(e)
+
+
+def test_real_sdk_routes_interactions_to_v1beta():
+    """Con la librería real: el cliente creado como en analyst.py apunta a v1beta (por defecto sería v1)."""
+    from google import genai
+    from google.genai._gaos.google_genai import get_google_genai_api_version
+    default = genai.Client(api_key="x")
+    fixed = genai.Client(api_key="x", http_options={"api_version": "v1beta"})
+    assert get_google_genai_api_version(default._api_client) == "v1"
+    assert get_google_genai_api_version(fixed._api_client) == "v1beta"

@@ -71,24 +71,27 @@ def parse_verdicts(text: str) -> list[dict]:
 def _run_antigravity(prompt: str, s: Settings) -> str:
     from google import genai  # import diferido: solo si se usa el analista
 
-    client = genai.Client(api_key=s.gemini_api_key)
+    # El agente solo existe en v1beta; la librería usa v1 por defecto (error 400 "only available in v1beta")
+    ver = s.analyst_api_version
+    client = genai.Client(api_key=s.gemini_api_key, http_options={"api_version": ver})
     interaction = client.interactions.create(
         agent=s.analyst_agent,
         input=prompt,
         environment="remote",
         tools=[{"type": "google_search"}, {"type": "url_context"}],
         background=True,
+        api_version=ver,
     )
     deadline = time.time() + s.analyst_timeout
     while interaction.status not in TERMINAL:
         if time.time() > deadline:
             try:
-                client.interactions.cancel(interaction.id)
+                client.interactions.cancel(interaction.id, api_version=ver)
             except Exception:  # noqa: BLE001
                 pass
             raise TimeoutError(f"el agente tardó más de {s.analyst_timeout:.0f} s")
         time.sleep(10)
-        interaction = client.interactions.get(interaction.id)
+        interaction = client.interactions.get(interaction.id, api_version=ver)
     if interaction.status != "completed":
         raise RuntimeError(f"estado del agente: {interaction.status} {interaction.errors or ''}")
     return interaction.output_text or ""
