@@ -74,10 +74,10 @@ function render(data) {
   }
   const an = data.analysis || {};
   if (an.status === "pending") {
-    banner += `<div class="banner ai">🧠 El analista IA (Google Antigravity) está revisando noticias y bajas de cada partido…${progressBar(an.progress)}</div>`;
+    banner += `<div class="banner ai">🧠 El analista IA está revisando noticias y bajas de cada partido…${progressBar(an.progress)}</div>`;
   } else if (an.status === "done") {
     const failed = an.progress?.failed_batches ? ` ${an.progress.failed_batches} lote(s) fallaron: esos picks aparecen "sin análisis".` : "";
-    banner += `<div class="banner ai done">🧠 Picks revisados por el analista IA${an.source === "simulado" ? " <b>(simulado: añade GEMINI_API_KEY)</b>" : " (Google Antigravity)"}.${data.discarded?.length ? ` ${data.discarded.length} descartados.` : ""}${failed}</div>`;
+    banner += `<div class="banner ai done">🧠 Picks revisados por el analista IA${({ simulado: " <b>(simulado: añade GEMINI_API_KEY)</b>", antigravity: " (agente Google Antigravity)", gemini: " (Gemini con búsqueda de Google)" })[an.source] || ""}.${data.discarded?.length ? ` ${data.discarded.length} descartados.` : ""}${failed}</div>`;
   } else if (an.status === "error") {
     banner += `<div class="banner warn">El analista IA ha fallado (${esc(an.error)}). Se muestran los picks sin revisar.</div>`;
   }

@@ -66,7 +66,7 @@ def test_antigravity_flow_mocked(monkeypatch):
     monkeypatch.setattr(google, "genai", fake, raising=False)
     monkeypatch.setattr(analyst.time, "sleep", lambda _: None)
 
-    s = Settings(odds_api_key="x", gemini_api_key="k")
+    s = Settings(odds_api_key="x", gemini_api_key="k", analyst_provider="antigravity")
     kept, discarded, source = analyst.analyse([_pick()], s, "2026-11-10")
     assert source == "antigravity" and calls["get"] == 1
     assert kept[0]["analysis"]["reason"] == "Sin bajas." and kept[0]["prob"] == 0.442
@@ -305,3 +305,47 @@ def test_probe_stream_counts_events_and_handles_silence():
     assert out.startswith("step.delta=2") and "step.start=1" in out
     out = analyst.probe_stream(C(Silent()), "i1", "v1beta", seconds=5)
     assert out.startswith("sin eventos") and "TimeoutError" in out
+
+
+def test_gemini_with_google_search_mocked(monkeypatch):
+    """Proveedor por defecto: generate_content con la herramienta google_search."""
+    import google
+    from google.genai import types as real_types
+    seen = {}
+
+    class Resp:
+        text = '```json\n[{"id":"c1","verdict":"reducir","prob_adjust":-0.02,"reason":"Duda con el delantero."}]\n```'
+        usage_metadata = type("U", (), {"total_token_count": 900})()
+
+        class _C:
+            grounding_metadata = type("G", (), {
+                "web_search_queries": ["Tottenham lesiones"],
+                "grounding_chunks": [type("Ch", (), {"web": type("W", (), {"uri": "https://x.com/a"})()})()],
+            })()
+        candidates = [_C()]
+
+    class Models:
+        def generate_content(self, model, contents, config):
+            seen["model"], seen["tools"] = model, config.tools
+            assert "Candidatos" in contents
+            return Resp()
+
+    class Client:
+        def __init__(self, api_key, http_options=None):
+            seen["http"] = http_options
+            self.models = Models()
+
+    fake = types.ModuleType("google.genai")
+    fake.Client = Client
+    fake.types = real_types
+    monkeypatch.setitem(sys.modules, "google.genai", fake)
+    monkeypatch.setitem(sys.modules, "google.genai.types", real_types)
+    monkeypatch.setattr(google, "genai", fake, raising=False)
+
+    s = Settings(odds_api_key="x", gemini_api_key="k")
+    assert s.analyst_provider == "gemini" and s.analyst_model == "gemini-2.5-flash"
+    kept, discarded, source = analyst.analyse([_pick()], s, "2026-11-11")
+    assert source == "gemini"
+    assert seen["model"] == "gemini-2.5-flash" and seen["tools"][0].google_search is not None
+    assert seen["http"] == {"api_version": "v1beta", "timeout": 300000}
+    assert kept[0]["analysis"]["verdict"] == "reducir" and kept[0]["prob"] == 0.412

@@ -1,4 +1,4 @@
-"""Analista IA: el agente de Google Antigravity (Gemini API) revisa los candidatos.
+"""Analista IA: Gemini con búsqueda de Google (por defecto) o el agente de Google Antigravity.
 
 El agente NO calcula las probabilidades (eso lo hace el código). Busca contexto
 (lesiones, rotaciones, motivación, noticias) y devuelve un veredicto por pick:
@@ -39,6 +39,7 @@ Tu trabajo NO es recalcular probabilidades desde cero. Para CADA candidato:
 Límites de esfuerzo (importante, hay un tiempo máximo):
 - Como máximo 3 búsquedas por candidato y lee como mucho 2 páginas por candidato.
 - No ejecutes código ni crees archivos: no hace falta.
+- Las URLs de "sources" deben ser páginas que hayas consultado de verdad; si no tienes, deja la lista vacía.
 - En cuanto tengas lo esencial, responde. Es mejor un "mantener" prudente que agotar el tiempo.
 
 Devuelve ÚNICAMENTE un bloque JSON válido, sin texto adicional, con este formato:
@@ -261,6 +262,42 @@ def apply_verdicts(picks: list[dict], verdicts: list[dict], s: Settings) -> tupl
     return kept[: s.num_picks], discarded
 
 
+def _run_gemini(prompt: str, s: Settings, label: str = "") -> str:
+    """Llamada normal a un modelo Gemini con búsqueda de Google integrada (sin agente ni máquina en la nube)."""
+    from google import genai  # import diferido
+    from google.genai import types
+
+    client = genai.Client(
+        api_key=s.gemini_api_key,
+        http_options={"api_version": s.analyst_api_version, "timeout": int(s.analyst_timeout * 1000)},
+    )
+    start = time.time()
+    log.info("Gemini %s: consultando %s con búsqueda de Google", label, s.analyst_model)
+    resp = client.models.generate_content(
+        model=s.analyst_model,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            tools=[types.Tool(google_search=types.GoogleSearch())],
+            temperature=0.2,
+        ),
+    )
+    queries, sources = [], []
+    try:
+        gm = resp.candidates[0].grounding_metadata
+        queries = list(gm.web_search_queries or [])
+        sources = [c.web.uri for c in (gm.grounding_chunks or []) if getattr(c, "web", None) and c.web.uri]
+    except (AttributeError, IndexError, TypeError):
+        pass
+    usage = getattr(resp, "usage_metadata", None)
+    log.info("Gemini %s: respuesta en %.1f s · %d búsquedas · %d fuentes · tokens=%s",
+             label, time.time() - start, len(queries), len(sources),
+             getattr(usage, "total_token_count", "?"))
+    text = resp.text or ""
+    if not text:
+        raise RuntimeError("Gemini devolvió una respuesta vacía")
+    return text
+
+
 def _analyse_batch(batch: list[dict], s: Settings, today: str, should_stop=None) -> list[dict]:
     if should_stop and should_stop():
         raise Cancelled()
@@ -272,7 +309,9 @@ def _analyse_batch(batch: list[dict], s: Settings, today: str, should_stop=None)
         candidates=json.dumps(batch, ensure_ascii=False, indent=1),
     )
     label = ",".join(c["id"] for c in batch)
-    return parse_verdicts(_run_antigravity(prompt, s, should_stop, label=label))
+    if s.analyst_provider == "antigravity":
+        return parse_verdicts(_run_antigravity(prompt, s, should_stop, label=label))
+    return parse_verdicts(_run_gemini(prompt, s, label=label))
 
 
 def analyse(picks: list[dict], s: Settings, today: str, progress=None,
@@ -311,4 +350,4 @@ def analyse(picks: list[dict], s: Settings, today: str, progress=None,
     if errors and len(errors) == len(batches):
         raise RuntimeError(errors[0])
     kept, discarded = apply_verdicts(picks, verdicts, s)
-    return kept, discarded, ("antigravity" if s.gemini_api_key else "simulado")
+    return kept, discarded, (s.analyst_provider if s.gemini_api_key else "simulado")
