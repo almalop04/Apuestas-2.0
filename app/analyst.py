@@ -98,6 +98,12 @@ def describe(interaction) -> str:
     total = getattr(usage, "total_tokens", None) if usage else None
     if total is not None:
         parts.append(f"tokens={total}")
+    # Si no hay pasos: ¿Google sigue actualizando la interacción? ¿tiene ya máquina asignada?
+    updated = getattr(interaction, "updated", None)
+    if updated:
+        parts.append(f"updated={updated}")
+    if hasattr(interaction, "environment_id"):
+        parts.append(f"entorno={getattr(interaction, 'environment_id', None) or 'sin asignar'}")
     return " · ".join(parts)
 
 
@@ -107,8 +113,10 @@ def _run_antigravity(prompt: str, s: Settings, should_stop=None, label: str = ""
     # El agente solo existe en v1beta; la librería usa v1 por defecto (error 400 "only available in v1beta")
     ver = s.analyst_api_version
     client = genai.Client(api_key=s.gemini_api_key, http_options={"api_version": ver})
-    base = dict(agent=s.analyst_agent, environment="remote",
-                tools=[{"type": "google_search"}, {"type": "url_context"}], background=True)
+    base = dict(agent=s.analyst_agent, environment="remote", background=True)
+    tools = [{"type": t.strip()} for t in s.analyst_tools.split(",") if t.strip()]
+    if tools:  # vacío = herramientas por defecto del agente
+        base["tools"] = tools
     agent_config = {"type": "antigravity"}
     if s.analyst_max_tokens > 0:
         agent_config["max_total_tokens"] = s.analyst_max_tokens  # tope de tokens de toda la ejecución
@@ -121,7 +129,8 @@ def _run_antigravity(prompt: str, s: Settings, should_stop=None, label: str = ""
     deadline = start + s.analyst_timeout
     continuations = 0
     last_logged = None
-    log.info("Antigravity %s: creado %s (%s)", label, interaction.id, interaction.status)
+    log.info("Antigravity %s: creado %s (%s) · herramientas=%s · %s", label, interaction.id,
+             interaction.status, s.analyst_tools or "por defecto", describe(interaction))
 
     def stop(exc: Exception):
         try:

@@ -255,3 +255,26 @@ def test_real_sdk_accepts_antigravity_agent_config():
     from google.genai._gaos.types.interactions.antigravityagentconfig import AntigravityAgentConfig
     cfg = AntigravityAgentConfig(**{"type": "antigravity", "max_total_tokens": 200000, "model": "x"})
     assert cfg.max_total_tokens == 200000
+
+
+def test_tools_configurable(monkeypatch):
+    script = []
+    Inter, created = _fake_genai(monkeypatch, script)
+    ok = '[{"id":"c1","verdict":"mantener","prob_adjust":0,"reason":"ok"}]'
+    script += [Inter("completed", "i1", text=ok), Inter("completed", "i2", text=ok), Inter("completed", "i3", text=ok)]
+    analyst._run_antigravity("p", Settings(odds_api_key="x", gemini_api_key="k"))
+    assert created[0]["tools"] == [{"type": "google_search"}, {"type": "url_context"}]
+    analyst._run_antigravity("p", Settings(odds_api_key="x", gemini_api_key="k", analyst_tools="google_search"))
+    assert created[1]["tools"] == [{"type": "google_search"}]
+    analyst._run_antigravity("p", Settings(odds_api_key="x", gemini_api_key="k", analyst_tools=""))
+    assert "tools" not in created[2]
+
+
+def test_describe_shows_updated_and_environment():
+    class It:
+        steps = []
+        usage = None
+        updated = "2026-11-11T16:25:00Z"
+        environment_id = None
+    d = analyst.describe(It())
+    assert "updated=2026-11-11T16:25:00Z" in d and "entorno=sin asignar" in d

@@ -91,6 +91,7 @@ pytest -q
 | `ANALYST_AGENT` | antigravity-preview-05-2026 | Id del agente |
 | `ANALYST_MAX_TOKENS` | 0 (sin tope) | Límite de tokens de cada ejecución del agente |
 | `ANALYST_AGENT_MODEL` | (el del agente) | Modelo con el que razona el agente |
+| `ANALYST_TOOLS` | google_search,url_context | Herramientas del agente (vacío = las suyas por defecto) |
 | `ANALYST_API_VERSION` | v1beta | Versión de la API de Gemini (el agente solo existe en v1beta) |
 
 ## Estructura
