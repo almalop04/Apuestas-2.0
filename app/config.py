@@ -2,6 +2,10 @@
 import os
 from dataclasses import dataclass, field
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 def _f(name: str, default: float) -> float:
     try:
@@ -46,7 +50,7 @@ class Settings:
     markets: str = field(default_factory=lambda: os.getenv("ODDS_MARKETS", "h2h,totals"))
     sharp_book: str = field(default_factory=lambda: os.getenv("SHARP_BOOK", "pinnacle"))
     cache_hours: float = field(default_factory=lambda: _f("CACHE_HOURS", 24))
-    days_ahead: int = field(default_factory=lambda: _i("DAYS_AHEAD", 7))
+    days_ahead: int = field(default_factory=lambda: _i("DAYS_AHEAD", 14))
     num_picks: int = field(default_factory=lambda: _i("NUM_PICKS", 10))
     min_edge: float = field(default_factory=lambda: _f("MIN_EDGE", 0.02))
     min_odds: float = field(default_factory=lambda: _f("MIN_ODDS", 1.5))

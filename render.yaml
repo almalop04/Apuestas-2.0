@@ -26,3 +26,5 @@ services:
         value: "0.7"
       - key: ENABLED_LEAGUES
         value: "PL,LALIGA,UCL,UEL"
+      - key: DAYS_AHEAD
+        value: "14"
