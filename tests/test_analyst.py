@@ -53,7 +53,7 @@ def test_antigravity_flow_mocked(monkeypatch):
             return Inter("completed", '```json\n[{"id":"c1","verdict":"mantener","prob_adjust":0.01,"reason":"Sin bajas."}]\n```')
 
     class Client:
-        def __init__(self, api_key):
+        def __init__(self, api_key, **kwargs):
             assert api_key == "k"
             self.interactions = Interactions()
 
@@ -73,7 +73,7 @@ def test_antigravity_flow_mocked(monkeypatch):
 def test_background_analysis_updates_cache(monkeypatch, tmp_path):
     monkeypatch.setattr(picks, "CACHE_FILE", tmp_path / "c.json")
     monkeypatch.setattr(picks, "_cache", None)
-    s = Settings(odds_api_key="", demo_env="1")
+    s = Settings(odds_api_key="", demo_env="1", gemini_api_key="")
     first = picks.get_picks(s, force=True)
     assert first["analysis"]["status"] == "pending" and "pool" not in first
     for _ in range(50):

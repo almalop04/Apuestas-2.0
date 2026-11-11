@@ -71,7 +71,7 @@ def parse_verdicts(text: str) -> list[dict]:
 def _run_antigravity(prompt: str, s: Settings) -> str:
     from google import genai  # import diferido: solo si se usa el analista
 
-    client = genai.Client(api_key=s.gemini_api_key)
+    client = genai.Client(api_key=s.gemini_api_key, http_options={"api_version": "v1beta"})
     interaction = client.interactions.create(
         agent=s.analyst_agent,
         input=prompt,

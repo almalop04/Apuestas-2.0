@@ -1,6 +1,7 @@
 """Genera los picks: junta cuotas + estadísticas, calcula valor y guarda en caché."""
 import json
 import logging
+import tempfile
 import threading
 import time
 from datetime import datetime, timezone
@@ -16,7 +17,7 @@ from .fdio import FdioClient, league_ratings
 from .stats import build_ratings, expected_goals, match_team
 
 log = logging.getLogger("picks")
-CACHE_FILE = Path("/tmp/picks_cache.json")
+CACHE_FILE = Path(tempfile.gettempdir()) / "picks_cache.json"
 _lock = threading.Lock()
 _cache: dict | None = None
 
