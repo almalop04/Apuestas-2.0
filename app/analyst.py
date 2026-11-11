@@ -296,39 +296,70 @@ def apply_verdicts(picks: list[dict], verdicts: list[dict], s: Settings) -> tupl
     return kept[: s.num_picks], discarded
 
 
+def _gemini_once(client, types, model: str, prompt: str, s: Settings, google_search: bool, thinking: str | None):
+    cfg = {"temperature": 0.2}
+    if google_search:
+        cfg["tools"] = [types.Tool(google_search=types.GoogleSearch())]
+    if thinking:
+        # Menos razonamiento = respuesta más rápida (el 504 DEADLINE_EXCEEDED venía de pensar demasiado)
+        cfg["thinking_config"] = types.ThinkingConfig(thinking_level=thinking.upper())
+    return client.models.generate_content(model=model, contents=prompt, config=types.GenerateContentConfig(**cfg))
+
+
 def _run_gemini(prompt: str, s: Settings, label: str = "", google_search: bool = True) -> str:
     """Llamada normal a un modelo Gemini (sin agente). Con google_search=True usa la búsqueda
-    de Google integrada (de pago en Gemini 3); con False solo lee las noticias que le pasamos (gratis)."""
+    de Google integrada (de pago en Gemini 3); con False solo lee las noticias que le pasamos (gratis).
+
+    Si el modelo principal falla por saturación o tiempo (5xx, 429), reintenta con ANALYST_FALLBACK_MODEL.
+    """
     from google import genai  # import diferido
-    from google.genai import types
+    from google.genai import errors, types
 
     client = genai.Client(
         api_key=s.gemini_api_key,
         http_options={"api_version": s.analyst_api_version, "timeout": int(s.analyst_timeout * 1000)},
     )
-    start = time.time()
-    log.info("Gemini %s: consultando %s %s", label, s.analyst_model,
-             "con búsqueda de Google" if google_search else "con noticias de Google News")
-    cfg = {"temperature": 0.2}
-    if google_search:
-        cfg["tools"] = [types.Tool(google_search=types.GoogleSearch())]
-    resp = client.models.generate_content(
-        model=s.analyst_model, contents=prompt, config=types.GenerateContentConfig(**cfg))
-    queries, sources = [], []
-    try:
-        gm = resp.candidates[0].grounding_metadata
-        queries = list(gm.web_search_queries or [])
-        sources = [c.web.uri for c in (gm.grounding_chunks or []) if getattr(c, "web", None) and c.web.uri]
-    except (AttributeError, IndexError, TypeError):
-        pass
-    usage = getattr(resp, "usage_metadata", None)
-    log.info("Gemini %s: respuesta en %.1f s · %d búsquedas · %d fuentes · tokens=%s",
-             label, time.time() - start, len(queries), len(sources),
-             getattr(usage, "total_token_count", "?"))
-    text = resp.text or ""
-    if not text:
-        raise RuntimeError("Gemini devolvió una respuesta vacía")
-    return text
+    thinking = s.analyst_thinking if s.analyst_thinking not in ("", "none", "default") else None
+    models = [s.analyst_model] + ([s.analyst_fallback_model]
+                                  if s.analyst_fallback_model and s.analyst_fallback_model != s.analyst_model else [])
+    last_error: Exception | None = None
+    for model in models:
+        start = time.time()
+        log.info("Gemini %s: consultando %s %s · razonamiento=%s", label, model,
+                 "con búsqueda de Google" if google_search else "con noticias de Google News", thinking or "por defecto")
+        try:
+            try:
+                resp = _gemini_once(client, types, model, prompt, s, google_search, thinking)
+            except errors.ClientError as e:
+                if thinking and e.code == 400 and "thinking" in str(e).lower():
+                    log.info("Gemini %s: %s no admite thinking_level, reintento sin él", label, model)
+                    resp = _gemini_once(client, types, model, prompt, s, google_search, None)
+                else:
+                    raise
+        except (errors.ServerError, errors.ClientError) as e:
+            retryable = isinstance(e, errors.ServerError) or getattr(e, "code", None) == 429
+            log.warning("Gemini %s: %s falló en %.0f s (%s)%s", label, model, time.time() - start,
+                        str(e)[:160], " · pruebo el modelo de respaldo" if retryable and model != models[-1] else "")
+            last_error = e
+            if retryable:
+                continue
+            raise
+        queries, sources = [], []
+        try:
+            gm = resp.candidates[0].grounding_metadata
+            queries = list(gm.web_search_queries or [])
+            sources = [c.web.uri for c in (gm.grounding_chunks or []) if getattr(c, "web", None) and c.web.uri]
+        except (AttributeError, IndexError, TypeError):
+            pass
+        usage = getattr(resp, "usage_metadata", None)
+        log.info("Gemini %s: respuesta de %s en %.1f s · %d búsquedas · %d fuentes · tokens=%s",
+                 label, model, time.time() - start, len(queries), len(sources),
+                 getattr(usage, "total_token_count", "?"))
+        text = resp.text or ""
+        if not text:
+            raise RuntimeError(f"Gemini ({model}) devolvió una respuesta vacía")
+        return text
+    raise last_error or RuntimeError("Gemini no respondió")
 
 
 def _analyse_batch(batch: list[dict], s: Settings, today: str, should_stop=None) -> list[dict]:

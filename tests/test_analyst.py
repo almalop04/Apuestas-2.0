@@ -387,3 +387,79 @@ def test_free_news_mode_passes_news_and_no_tools(monkeypatch):
     assert seen["model"] == "gemini-3.8-flash" and not seen["tools"]
     assert "A es baja para el sábado" in seen["prompt"] and "Lee SOLO sus" in seen["prompt"]
     assert discarded[0]["analysis"]["sources"] == ["https://n/1"]
+
+
+def _gemini_fake(monkeypatch, behaviour):
+    """behaviour(model, config) -> respuesta o lanza un error real de google.genai."""
+    import google
+    from google.genai import errors as real_errors
+    from google.genai import types as real_types
+    calls = []
+
+    class Models:
+        def generate_content(self, model, contents, config):
+            calls.append((model, config))
+            return behaviour(model, config)
+
+    class Client:
+        def __init__(self, api_key, http_options=None):
+            self.models = Models()
+
+    fake = types.ModuleType("google.genai")
+    fake.Client, fake.types, fake.errors = Client, real_types, real_errors
+    monkeypatch.setitem(sys.modules, "google.genai", fake)
+    monkeypatch.setitem(sys.modules, "google.genai.types", real_types)
+    monkeypatch.setitem(sys.modules, "google.genai.errors", real_errors)
+    monkeypatch.setattr(google, "genai", fake, raising=False)
+    return calls
+
+
+class _OkResp:
+    text = '[{"id":"c1","verdict":"mantener","prob_adjust":0,"reason":"ok"}]'
+    usage_metadata = None
+    candidates = []
+
+
+def test_gemini_504_falls_back_to_lite_model_with_low_thinking(monkeypatch):
+    from google.genai import errors as real_errors
+
+    def behaviour(model, config):
+        if model == "gemini-3.8-flash":
+            raise real_errors.ServerError(504, {"error": {"code": 504, "message": "Deadline expired",
+                                                          "status": "DEADLINE_EXCEEDED"}})
+        return _OkResp()
+
+    calls = _gemini_fake(monkeypatch, behaviour)
+    out = analyst._run_gemini("p", Settings(odds_api_key="x", gemini_api_key="k"), google_search=False)
+    assert "mantener" in out
+    assert [m for m, _ in calls] == ["gemini-3.8-flash", "gemini-3.5-flash-lite"]
+    assert all(c.thinking_config.thinking_level.value == "LOW" for _, c in calls)
+
+
+def test_gemini_non_retryable_error_is_raised(monkeypatch):
+    from google.genai import errors as real_errors
+
+    def behaviour(model, config):
+        raise real_errors.ClientError(403, {"error": {"code": 403, "message": "denied", "status": "PERMISSION_DENIED"}})
+
+    calls = _gemini_fake(monkeypatch, behaviour)
+    try:
+        analyst._run_gemini("p", Settings(odds_api_key="x", gemini_api_key="k"), google_search=False)
+        assert False
+    except real_errors.ClientError:
+        pass
+    assert len(calls) == 1  # un 403 no se reintenta con otro modelo
+
+
+def test_thinking_unsupported_retries_without_it(monkeypatch):
+    from google.genai import errors as real_errors
+
+    def behaviour(model, config):
+        if config.thinking_config is not None:
+            raise real_errors.ClientError(400, {"error": {"code": 400, "message": "thinking_level is not supported",
+                                                          "status": "INVALID_ARGUMENT"}})
+        return _OkResp()
+
+    calls = _gemini_fake(monkeypatch, behaviour)
+    analyst._run_gemini("p", Settings(odds_api_key="x", gemini_api_key="k"), google_search=False)
+    assert len(calls) == 2 and calls[1][1].thinking_config is None

@@ -84,6 +84,8 @@ pytest -q
 | `SHARP_BOOK` | pinnacle | Casa de referencia |
 | `ANALYST_PROVIDER` | gemini | `gemini` (modelo + búsqueda de Google) o `antigravity` (agente) |
 | `ANALYST_MODEL` | gemini-3.8-flash | Modelo de Gemini (solo con `gemini`) |
+| `ANALYST_THINKING` | low | Nivel de razonamiento de Gemini 3 (minimal, low, medium, high, none) |
+| `ANALYST_FALLBACK_MODEL` | gemini-3.5-flash-lite | Modelo de respaldo si el principal da 504/503/429 (vacío = sin respaldo) |
 | `ANALYST_SEARCH` | news | `news` (Google News + Tavily, gratis) o `google` (búsqueda integrada, de pago en Gemini 3) |
 | `TAVILY_API_KEY` | (vacía) | Opcional: añade fragmentos de noticias de Tavily |
 | `ANALYST_NEWS_PER_PICK` | 12 | Máximo de noticias que se pasan por partido |
