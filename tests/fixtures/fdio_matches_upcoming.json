@@ -1,0 +1,208 @@
+{
+ "success": true,
+ "data": [
+  {
+   "match_id": 3744623801,
+   "match_date": "2026-11-20 20:00:00",
+   "date_unix": 1795204800,
+   "status": "incomplete",
+   "status_localized": "Scheduled",
+   "round_id": 124574,
+   "game_week": 13,
+   "league": {
+    "league_id": 10,
+    "league_name": "La Liga",
+    "country": "Spain",
+    "league_image": "https://footballdata.io/img/league/spain-la-liga.png"
+   },
+   "season": {
+    "season_id": 117065,
+    "year": 20262027
+   },
+   "home_team": {
+    "team_id": 255,
+    "team_name": "Athletic Club Bilbao",
+    "seo_slug": "athletic-club-bilbao",
+    "team_logo": "https://footballdata.io/img/team/spain-athletic-club-bilbao.png",
+    "country": "Spain"
+   },
+   "away_team": {
+    "team_id": 250,
+    "team_name": "Reial Club Deportiu Espanyol",
+    "seo_slug": "reial-club-deportiu-espanyol",
+    "team_logo": "https://footballdata.io/img/team/spain-reial-club-deportiu-espanyol.png",
+    "country": "Spain"
+   },
+   "score": {
+    "home": 0,
+    "away": 0,
+    "total": 0,
+    "halftime_home": 0,
+    "halftime_away": 0,
+    "halftime_total": 0,
+    "second_half_home": 0,
+    "second_half_away": 0,
+    "second_half_total": 0
+   },
+   "xg": {
+    "home": 0,
+    "away": 0,
+    "total": 0,
+    "prematch_home": 1.7,
+    "prematch_away": 1.1,
+    "prematch_total": 2.8
+   },
+   "form": {
+    "home_ppg": 1.83,
+    "away_ppg": 1.17,
+    "pre_match_home_ppg": 1.83,
+    "pre_match_away_ppg": 1.17
+   },
+   "venue": {
+    "name": "",
+    "location": "",
+    "attendance": -1
+   }
+  },
+  {
+   "match_id": 3714519142,
+   "match_date": "2026-11-21 13:00:00",
+   "date_unix": 1795266000,
+   "status": "incomplete",
+   "status_localized": "Scheduled",
+   "round_id": 124574,
+   "game_week": 13,
+   "league": {
+    "league_id": 10,
+    "league_name": "La Liga",
+    "country": "Spain",
+    "league_image": "https://footballdata.io/img/league/spain-la-liga.png"
+   },
+   "season": {
+    "season_id": 117065,
+    "year": 20262027
+   },
+   "home_team": {
+    "team_id": 247,
+    "team_name": "Deportivo Alaves",
+    "seo_slug": "deportivo-alaves",
+    "team_logo": "https://footballdata.io/img/team/spain-deportivo-alaves.png",
+    "country": "Spain"
+   },
+   "away_team": {
+    "team_id": 256,
+    "team_name": "Real Club Deportivo de La Coruna",
+    "seo_slug": "real-club-deportivo-de-la-coruna",
+    "team_logo": "https://footballdata.io/img/team/spain-real-club-deportivo-de-la-coruna.png",
+    "country": "Spain"
+   },
+   "score": {
+    "home": 0,
+    "away": 0,
+    "total": 0,
+    "halftime_home": 0,
+    "halftime_away": 0,
+    "halftime_total": 0,
+    "second_half_home": 0,
+    "second_half_away": 0,
+    "second_half_total": 0
+   },
+   "xg": {
+    "home": 0,
+    "away": 0,
+    "total": 0,
+    "prematch_home": 1.49,
+    "prematch_away": 1.26,
+    "prematch_total": 2.75
+   },
+   "form": {
+    "home_ppg": 1.67,
+    "away_ppg": 1,
+    "pre_match_home_ppg": 1.67,
+    "pre_match_away_ppg": 1
+   },
+   "venue": {
+    "name": "",
+    "location": "",
+    "attendance": -1
+   }
+  },
+  {
+   "match_id": 3714519152,
+   "match_date": "2026-11-21 15:15:00",
+   "date_unix": 1795274100,
+   "status": "incomplete",
+   "status_localized": "Scheduled",
+   "round_id": 124574,
+   "game_week": 13,
+   "league": {
+    "league_id": 10,
+    "league_name": "La Liga",
+    "country": "Spain",
+    "league_image": "https://footballdata.io/img/league/spain-la-liga.png"
+   },
+   "season": {
+    "season_id": 117065,
+    "year": 20262027
+   },
+   "home_team": {
+    "team_id": 261,
+    "team_name": "Rayo Vallecano",
+    "seo_slug": "rayo-vallecano",
+    "team_logo": "https://footballdata.io/img/team/spain-rayo-vallecano.png",
+    "country": "Spain"
+   },
+   "away_team": {
+    "team_id": 258,
+    "team_name": "Valencia CF",
+    "seo_slug": "valencia-cf",
+    "team_logo": "https://footballdata.io/img/team/spain-valencia-cf.png",
+    "country": "Spain"
+   },
+   "score": {
+    "home": 0,
+    "away": 0,
+    "total": 0,
+    "halftime_home": 0,
+    "halftime_away": 0,
+    "halftime_total": 0,
+    "second_half_home": 0,
+    "second_half_away": 0,
+    "second_half_total": 0
+   },
+   "xg": {
+    "home": 0,
+    "away": 0,
+    "total": 0,
+    "prematch_home": 1.63,
+    "prematch_away": 0.93,
+    "prematch_total": 2.56
+   },
+   "form": {
+    "home_ppg": 2,
+    "away_ppg": 1.4,
+    "pre_match_home_ppg": 2,
+    "pre_match_away_ppg": 1.4
+   },
+   "venue": {
+    "name": "",
+    "location": "",
+    "attendance": -1
+   }
+  }
+ ],
+ "meta": {
+  "plan": "free",
+  "requests_used": 6,
+  "requests_limit": 1000,
+  "requests_remaining": 994,
+  "coverage_note": "Coverage varies by league and season.",
+  "league_limit": 5,
+  "language": "en",
+  "page": 1,
+  "limit": 3,
+  "count": 3,
+  "total": 10,
+  "total_pages": 4
+ }
+}

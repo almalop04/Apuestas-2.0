@@ -1,0 +1,145 @@
+{
+ "success": true,
+ "data": {
+  "match": {
+   "match_id": 3744623801,
+   "match_date": "2026-11-20 20:00:00",
+   "date_unix": 1795204800,
+   "status": "incomplete",
+   "status_localized": "Scheduled",
+   "league": {
+    "league_id": 10,
+    "name": "Spain La Liga",
+    "country": "Spain",
+    "competition_name": "La Liga",
+    "image": "https://footballdata.io/img/league/spain-la-liga.png"
+   },
+   "season": {
+    "season_id": 117065,
+    "year": 20262027
+   },
+   "home_team": {
+    "team_id": 255,
+    "team_name": "Athletic Club Bilbao",
+    "team_logo": "https://footballdata.io/img/team/athletic-club-bilbao.png"
+   },
+   "away_team": {
+    "team_id": 250,
+    "team_name": "RCD Espanyol",
+    "team_logo": "https://footballdata.io/img/team/reial-club-deportiu-espanyol.png"
+   },
+   "score": {
+    "home": 0,
+    "away": 0,
+    "total_goals": 0
+   }
+  },
+  "odds": {
+   "match_winner": {
+    "home": 0,
+    "draw": 0,
+    "away": 0
+   },
+   "total_goals": {
+    "over_0_5": 0,
+    "over_1_5": 0,
+    "over_2_5": 0,
+    "over_3_5": 0,
+    "over_4_5": 0,
+    "under_0_5": 0,
+    "under_1_5": 0,
+    "under_2_5": 0,
+    "under_3_5": 0,
+    "under_4_5": 0
+   },
+   "both_teams_to_score": {
+    "yes": 0,
+    "no": 0
+   },
+   "double_chance": {
+    "home_or_draw": 0,
+    "home_or_away": 0,
+    "draw_or_away": 0
+   },
+   "draw_no_bet": {
+    "home": 0,
+    "away": 0
+   },
+   "corners": {
+    "over_7_5": 0,
+    "over_8_5": 0,
+    "over_9_5": 0,
+    "over_10_5": 0,
+    "over_11_5": 0,
+    "under_7_5": 0,
+    "under_8_5": 0,
+    "under_9_5": 0,
+    "under_10_5": 0,
+    "under_11_5": 0,
+    "match_winner": {
+     "home": null,
+     "draw": null,
+     "away": null
+    }
+   },
+   "btts_first_half": {
+    "yes": null,
+    "no": null
+   },
+   "btts_second_half": {
+    "yes": null,
+    "no": null
+   },
+   "clean_sheet": {
+    "home_yes": null,
+    "home_no": null,
+    "away_yes": null,
+    "away_no": null
+   },
+   "first_half_result": {
+    "home": null,
+    "draw": null,
+    "away": null
+   },
+   "first_half_goals": {
+    "over_0_5": null,
+    "over_1_5": null,
+    "over_2_5": null,
+    "under_0_5": null,
+    "under_1_5": null,
+    "under_2_5": null
+   },
+   "second_half_result": {
+    "home": null,
+    "draw": null,
+    "away": null
+   },
+   "second_half_goals": {
+    "over_0_5": null,
+    "over_1_5": null,
+    "over_2_5": null,
+    "under_0_5": null,
+    "under_1_5": null,
+    "under_2_5": null
+   },
+   "team_to_score_first": {
+    "home": null,
+    "no_goal": null,
+    "away": null
+   },
+   "win_to_nil": {
+    "home": null,
+    "away": null
+   }
+  }
+ },
+ "meta": {
+  "plan": "free",
+  "requests_used": 8,
+  "requests_limit": 1000,
+  "requests_remaining": 992,
+  "coverage_note": "Coverage varies by league and season.",
+  "league_limit": 5,
+  "language": "en"
+ }
+}

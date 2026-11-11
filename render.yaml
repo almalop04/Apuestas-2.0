@@ -12,7 +12,7 @@ services:
         value: 3.12.7
       - key: ODDS_API_KEY
         sync: false
-      - key: API_FOOTBALL_KEY
+      - key: FOOTBALLDATA_IO_KEY
         sync: false
       - key: GEMINI_API_KEY
         sync: false
@@ -24,3 +24,5 @@ services:
         value: "0.02"
       - key: MARKET_WEIGHT
         value: "0.7"
+      - key: ENABLED_LEAGUES
+        value: "PL,LALIGA,UCL,UEL"

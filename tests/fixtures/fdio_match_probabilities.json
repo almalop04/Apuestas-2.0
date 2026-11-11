@@ -1,0 +1,79 @@
+{
+ "success": true,
+ "data": {
+  "match": {
+   "match_id": 3744623801,
+   "match_date": "2026-11-20 20:00:00",
+   "date_unix": 1795204800,
+   "status": "incomplete",
+   "status_localized": "Scheduled",
+   "league": {
+    "league_id": 10,
+    "name": "Spain La Liga",
+    "country": "Spain",
+    "competition_name": "La Liga",
+    "image": "https://footballdata.io/img/league/spain-la-liga.png"
+   },
+   "season": {
+    "season_id": 117065,
+    "year": 20262027
+   },
+   "home_team": {
+    "team_id": 255,
+    "team_name": "Athletic Club Bilbao",
+    "team_logo": "https://footballdata.io/img/team/athletic-club-bilbao.png"
+   },
+   "away_team": {
+    "team_id": 250,
+    "team_name": "RCD Espanyol",
+    "team_logo": "https://footballdata.io/img/team/reial-club-deportiu-espanyol.png"
+   },
+   "score": {
+    "home": 0,
+    "away": 0,
+    "total_goals": 0
+   }
+  },
+  "probabilities": {
+   "match_winner": {
+    "home_win": 47.5,
+    "draw": 16.4,
+    "away_win": 36.1
+   },
+   "total_goals": {
+    "over_0_5": 92,
+    "over_1_5": 83,
+    "over_2_5": 59,
+    "over_3_5": 17,
+    "over_4_5": 0
+   },
+   "both_teams_to_score": {
+    "yes": 59,
+    "no": 41
+   },
+   "clean_sheet": {
+    "home": null,
+    "away": null
+   },
+   "team_to_score": {
+    "home": null,
+    "away": null
+   },
+   "corners": {
+    "over_7_5": 8.83,
+    "over_8_5": 59,
+    "over_9_5": 59,
+    "over_10_5": 34
+   }
+  }
+ },
+ "meta": {
+  "plan": "free",
+  "requests_used": 9,
+  "requests_limit": 1000,
+  "requests_remaining": 991,
+  "coverage_note": "Coverage varies by league and season.",
+  "league_limit": 5,
+  "language": "en"
+ }
+}

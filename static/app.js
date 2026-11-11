@@ -33,6 +33,7 @@ function pickCard(p, i) {
   ctx.push(`<span>Mercado <b>${pct(p.prob_market)}</b>${p.fair_source === "consenso" ? " (consenso)" : ""}</span>`);
   if (p.prob_model != null) ctx.push(`<span>Modelo <b>${pct(p.prob_model)}</b></span>`);
   if (p.xg_home != null) ctx.push(`<span>Goles esp. <b>${p.xg_home.toFixed(2)} – ${p.xg_away.toFixed(2)}</b></span>`);
+  if (p.xg_pre_home != null) ctx.push(`<span>xG prepartido fdio <b>${p.xg_pre_home.toFixed(2)} – ${p.xg_pre_away.toFixed(2)}</b></span>`);
   if (p.form_home) ctx.push(`<span>Forma ${form(p.form_home)} vs ${form(p.form_away)}</span>`);
 
   return `
@@ -56,11 +57,11 @@ function pickCard(p, i) {
 
 function render(data) {
   const gen = new Date(data.generated_at).toLocaleString("es-ES");
-  $("#meta").innerHTML = `Actualizado: ${esc(gen)}${data.credits_remaining != null ? `<br>Créditos Odds API: ${esc(data.credits_remaining)}` : ""}`;
+  $("#meta").innerHTML = `Actualizado: ${esc(gen)}${data.credits_remaining != null ? `<br>Créditos Odds API: ${esc(data.credits_remaining)}` : ""}${data.fdio_remaining != null ? `<br>Peticiones footballdata.io: ${esc(data.fdio_remaining)}` : ""}`;
 
   let banner = "";
   if (data.demo) {
-    banner += `<div class="banner demo"><b>Modo demo:</b> datos ficticios. Añade <code>ODDS_API_KEY</code> (y <code>API_FOOTBALL_KEY</code>) en Render para usar datos reales.</div>`;
+    banner += `<div class="banner demo"><b>Modo demo:</b> datos ficticios. Falta <code>ODDS_API_KEY</code> (cuotas, the-odds-api.com) en Render → Environment. Añádela y redespliega para usar datos reales.</div>`;
   }
   const an = data.analysis || {};
   if (an.status === "pending") {

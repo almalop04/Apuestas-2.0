@@ -12,7 +12,8 @@ from . import analyst, demo_data
 from .config import LEAGUES, Settings
 from .model import best_prices, kelly_stake, market_probabilities, poisson_probs
 from .odds import fetch_odds
-from .stats import build_ratings, expected_goals, fetch_standings, fetch_standings_footballdata, match_team
+from .fdio import FdioClient, league_ratings
+from .stats import build_ratings, expected_goals, match_team
 
 log = logging.getLogger("picks")
 CACHE_FILE = Path("/tmp/picks_cache.json")
@@ -48,10 +49,17 @@ def analyse_event(ev: dict, league: dict, ratings: dict | None, s: Settings) -> 
         away = match_team(ev["away_team"], ratings["teams"])
         if home and away and home is not away:
             lam_h, lam_a = expected_goals(ratings, home, away)
+            pre = (ratings.get("prematch") or {}).get((home.get("id"), away.get("id")))
+            if pre and s.prematch_weight > 0:
+                # mezcla con el xG prepartido que publica footballdata.io
+                w = s.prematch_weight
+                lam_h, lam_a = (1 - w) * lam_h + w * pre[0], (1 - w) * lam_a + w * pre[1]
             model = poisson_probs(lam_h, lam_a)
             ctx = {
                 "xg_home": round(lam_h, 2),
                 "xg_away": round(lam_a, 2),
+                "xg_pre_home": pre[0] if pre else None,
+                "xg_pre_away": pre[1] if pre else None,
                 "form_home": home["form"],
                 "form_away": away["form"],
                 "rank_home": home["rank"],
@@ -102,8 +110,12 @@ def generate(s: Settings) -> dict:
     candidates: list[dict] = []
     credits = None
     analysed = 0
+    unmatched: list[str] = []
 
     with httpx.Client() as client:
+        fdio = FdioClient(client, s.fdio_key) if (s.fdio_key and not s.demo) else None
+        if not s.demo and not s.fdio_key:
+            warnings.append("Sin FOOTBALLDATA_IO_KEY: picks calculados solo con el mercado, sin modelo de estadísticas")
         for league in LEAGUES:
             # 1) Cuotas
             if s.demo:
@@ -121,20 +133,28 @@ def generate(s: Settings) -> dict:
             ratings = None
             if s.demo:
                 ratings = build_ratings(demo_data.standings(league))
-            elif s.footballdata_io_key and league.get("fd_id"):
+            elif fdio:
                 try:
-                    ratings = build_ratings(fetch_standings_footballdata(client, league["fd_id"], s.footballdata_io_key))
-                except Exception as e:  # noqa: BLE001
-                    warnings.append(f"{league['name']}: error con footballdata.io ({e})")
-            elif s.api_football_key:
-                try:
-                    ratings = build_ratings(fetch_standings(client, league["af_id"], s.api_football_key))
+                    ratings = league_ratings(
+                        fdio, league["fdio_id"], s.days_ahead,
+                        half_life_days=s.half_life_days, xg_weight=s.xg_weight,
+                    ) or None
+                    if ratings is None:
+                        warnings.append(f"{league['name']}: footballdata.io sin partidos jugados, solo mercado")
                 except Exception as e:  # noqa: BLE001
                     warnings.append(f"{league['name']}: sin estadísticas, solo mercado ({e})")
 
             for ev in events:
                 analysed += 1
+                if ratings:
+                    for side in ("home_team", "away_team"):
+                        if not match_team(ev[side], ratings["teams"]):
+                            unmatched.append(f"{ev[side]} ({league['name']})")
                 candidates.extend(analyse_event(ev, league, ratings, s))
+
+    if unmatched:
+        warnings.append("Equipos sin emparejar con footballdata.io (se usa solo el mercado en sus partidos): "
+                        + ", ".join(sorted(set(unmatched))))
 
     # 3) Una selección por partido (la de más valor) y top N
     by_match: dict[tuple, dict] = {}
@@ -155,6 +175,7 @@ def generate(s: Settings) -> dict:
         "matches_analysed": analysed,
         "candidates": len(by_match),
         "credits_remaining": credits,
+        "fdio_remaining": fdio.requests_remaining if fdio else None,
         "warnings": warnings,
         "settings": {
             "min_edge": s.min_edge,
@@ -163,6 +184,8 @@ def generate(s: Settings) -> dict:
             "market_weight": s.market_weight,
             "kelly_fraction": s.kelly_fraction,
             "days_ahead": s.days_ahead,
+            "xg_weight": s.xg_weight,
+            "prematch_weight": s.prematch_weight,
         },
         "picks": picks,
     }

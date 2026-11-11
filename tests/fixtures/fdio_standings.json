@@ -1,0 +1,1131 @@
+{
+ "success": true,
+ "data": {
+  "league": {
+   "league_id": 10,
+   "name": "Spain La Liga",
+   "country": "Spain",
+   "league_name": "La Liga",
+   "image": "https://footballdata.io/img/league/spain-la-liga.png"
+  },
+  "season": {
+   "season_id": 117065,
+   "year": 20262027
+  },
+  "standings": [
+   {
+    "position": 1,
+    "team": {
+     "team_id": 77,
+     "team_name": "FC Barcelona",
+     "team_name_clean": "FC Barcelona",
+     "team_name_english": "FC Barcelona",
+     "seo_slug": "fc-barcelona",
+     "full_name": "FC Barcelona",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/fc-barcelona.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 11,
+     "draws": 0,
+     "losses": 1,
+     "points": 33,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 48,
+     "against": 13,
+     "difference": 35
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "fc-barcelona",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 2,
+    "team": {
+     "team_id": 78,
+     "team_name": "Real Madrid CF",
+     "team_name_clean": "Real Madrid",
+     "team_name_english": "Real Madrid CF",
+     "seo_slug": "real-madrid-cf",
+     "full_name": "Real Madrid CF",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/real-madrid-cf.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 10,
+     "draws": 0,
+     "losses": 2,
+     "points": 30,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 31,
+     "against": 10,
+     "difference": 21
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "real-madrid-cf",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 3,
+    "team": {
+     "team_id": 109,
+     "team_name": "Club Atletico de Madrid",
+     "team_name_clean": "Atlético Madrid",
+     "team_name_english": "Club Atletico de Madrid",
+     "seo_slug": "club-atletico-de-madrid",
+     "full_name": "Club Atlético de Madrid",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/club-atletico-de-madrid.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 9,
+     "draws": 1,
+     "losses": 2,
+     "points": 28,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 23,
+     "against": 10,
+     "difference": 13
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "club-atletico-de-madrid",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 4,
+    "team": {
+     "team_id": 254,
+     "team_name": "Real Betis Balompie",
+     "team_name_clean": "Real Betis",
+     "team_name_english": "Real Betis Balompie",
+     "seo_slug": "real-betis-balompie",
+     "full_name": "Real Betis Balompié",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/real-betis-balompie.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 8,
+     "draws": 2,
+     "losses": 2,
+     "points": 26,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 20,
+     "against": 15,
+     "difference": 5
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "real-betis-balompie",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 5,
+    "team": {
+     "team_id": 260,
+     "team_name": "Real Sociedad de Futbol",
+     "team_name_clean": "Real Sociedad",
+     "team_name_english": "Real Sociedad de Futbol",
+     "seo_slug": "real-sociedad-de-futbol",
+     "full_name": "Real Sociedad de Fútbol",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/real-sociedad-de-futbol.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 7,
+     "draws": 1,
+     "losses": 4,
+     "points": 22,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 21,
+     "against": 20,
+     "difference": 1
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "real-sociedad-de-futbol",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 6,
+    "team": {
+     "team_id": 92,
+     "team_name": "Sevilla FC",
+     "team_name_clean": "Sevilla FC",
+     "team_name_english": "Sevilla FC",
+     "seo_slug": "sevilla-fc",
+     "full_name": "Sevilla FC",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/sevilla-fc.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 5,
+     "draws": 3,
+     "losses": 4,
+     "points": 18,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 17,
+     "against": 19,
+     "difference": -2
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "sevilla-fc",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 7,
+    "team": {
+     "team_id": 255,
+     "team_name": "Athletic Club Bilbao",
+     "team_name_clean": "Athletic Club Bilbao",
+     "team_name_english": "Athletic Club Bilbao",
+     "seo_slug": "athletic-club-bilbao",
+     "full_name": "Athletic Club Bilbao",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/athletic-club-bilbao.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 11,
+     "wins": 4,
+     "draws": 4,
+     "losses": 3,
+     "points": 16,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 15,
+     "against": 11,
+     "difference": 4
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "athletic-club-bilbao",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 8,
+    "team": {
+     "team_id": 70,
+     "team_name": "Villarreal CF",
+     "team_name_clean": "Villarreal",
+     "team_name_english": "Villarreal CF",
+     "seo_slug": "villarreal-cf",
+     "full_name": "Villarreal CF",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/villarreal-cf.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 4,
+     "draws": 3,
+     "losses": 5,
+     "points": 15,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 17,
+     "against": 15,
+     "difference": 2
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "villarreal-cf",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 9,
+    "team": {
+     "team_id": 256,
+     "team_name": "Real Club Deportivo de La Coruna",
+     "team_name_clean": "Deportivo La Coruña",
+     "team_name_english": "Real Club Deportivo de La Coruna",
+     "seo_slug": "real-club-deportivo-de-la-coruna",
+     "full_name": "Real Club Deportivo de La Coruña",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/real-club-deportivo-de-la-coruna.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 3,
+     "draws": 6,
+     "losses": 3,
+     "points": 15,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 15,
+     "against": 14,
+     "difference": 1
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "real-club-deportivo-de-la-coruna",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 10,
+    "team": {
+     "team_id": 283,
+     "team_name": "Real Racing Club de Santander",
+     "team_name_clean": "Racing Santander",
+     "team_name_english": "Real Racing Club de Santander",
+     "seo_slug": "real-racing-club-de-santander",
+     "full_name": "Real Racing Club de Santander",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/real-racing-club-de-santander.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 4,
+     "draws": 2,
+     "losses": 6,
+     "points": 14,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 17,
+     "against": 30,
+     "difference": -13
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "real-racing-club-de-santander",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 11,
+    "team": {
+     "team_id": 251,
+     "team_name": "Real Club Celta de Vigo",
+     "team_name_clean": "Celta de Vigo",
+     "team_name_english": "Real Club Celta de Vigo",
+     "seo_slug": "real-club-celta-de-vigo",
+     "full_name": "Real Club Celta de Vigo",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/real-club-celta-de-vigo.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 2,
+     "draws": 7,
+     "losses": 3,
+     "points": 13,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 10,
+     "against": 10,
+     "difference": 0
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "real-club-celta-de-vigo",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 12,
+    "team": {
+     "team_id": 247,
+     "team_name": "Deportivo Alaves",
+     "team_name_clean": "Deportivo Alavés",
+     "team_name_english": "Deportivo Alaves",
+     "seo_slug": "deportivo-alaves",
+     "full_name": "Deportivo Alavés",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/deportivo-alaves.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 3,
+     "draws": 4,
+     "losses": 5,
+     "points": 13,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 15,
+     "against": 17,
+     "difference": -2
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "deportivo-alaves",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 13,
+    "team": {
+     "team_id": 250,
+     "team_name": "Reial Club Deportiu Espanyol",
+     "team_name_clean": "RCD Espanyol",
+     "team_name_english": "Reial Club Deportiu Espanyol",
+     "seo_slug": "reial-club-deportiu-espanyol",
+     "full_name": "Reial Club Deportiu Espanyol",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/reial-club-deportiu-espanyol.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 3,
+     "draws": 3,
+     "losses": 6,
+     "points": 12,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 13,
+     "against": 14,
+     "difference": -1
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "reial-club-deportiu-espanyol",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 14,
+    "team": {
+     "team_id": 261,
+     "team_name": "Rayo Vallecano",
+     "team_name_clean": "Rayo Vallecano",
+     "team_name_english": "Rayo Vallecano",
+     "seo_slug": "rayo-vallecano",
+     "full_name": "Rayo Vallecano",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/rayo-vallecano.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 11,
+     "wins": 3,
+     "draws": 3,
+     "losses": 5,
+     "points": 12,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 15,
+     "against": 21,
+     "difference": -6
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "rayo-vallecano",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 15,
+    "team": {
+     "team_id": 263,
+     "team_name": "Getafe Club de Futbol",
+     "team_name_clean": "Getafe CF",
+     "team_name_english": "Getafe Club de Futbol",
+     "seo_slug": "getafe-club-de-futbol",
+     "full_name": "Getafe Club de Fútbol",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/getafe-club-de-futbol.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 3,
+     "draws": 3,
+     "losses": 6,
+     "points": 12,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 8,
+     "against": 18,
+     "difference": -10
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "getafe-club-de-futbol",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 16,
+    "team": {
+     "team_id": 257,
+     "team_name": "CA Osasuna",
+     "team_name_clean": "CA Osasuna",
+     "team_name_english": "CA Osasuna",
+     "seo_slug": "ca-osasuna",
+     "full_name": "CA Osasuna",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/ca-osasuna.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 3,
+     "draws": 3,
+     "losses": 6,
+     "points": 12,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 12,
+     "against": 23,
+     "difference": -11
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "ca-osasuna",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 17,
+    "team": {
+     "team_id": 262,
+     "team_name": "Levante UD",
+     "team_name_clean": "Levante UD",
+     "team_name_english": "Levante UD",
+     "seo_slug": "levante-ud",
+     "full_name": "Levante UD",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/levante-ud.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 2,
+     "draws": 5,
+     "losses": 5,
+     "points": 11,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 16,
+     "against": 21,
+     "difference": -5
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "levante-ud",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 18,
+    "team": {
+     "team_id": 265,
+     "team_name": "Elche CF",
+     "team_name_clean": "Elche CF",
+     "team_name_english": "Elche CF",
+     "seo_slug": "elche-cf",
+     "full_name": "Elche CF",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/elche-cf.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 2,
+     "draws": 4,
+     "losses": 6,
+     "points": 10,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 14,
+     "against": 20,
+     "difference": -6
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "elche-cf",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 19,
+    "team": {
+     "team_id": 258,
+     "team_name": "Valencia CF",
+     "team_name_clean": "Valencia CF",
+     "team_name_english": "Valencia CF",
+     "seo_slug": "valencia-cf",
+     "full_name": "Valencia CF",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/valencia-cf.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 2,
+     "draws": 3,
+     "losses": 7,
+     "points": 9,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 8,
+     "against": 20,
+     "difference": -12
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "valencia-cf",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   },
+   {
+    "position": 20,
+    "team": {
+     "team_id": 253,
+     "team_name": "Malaga CF",
+     "team_name_clean": "Málaga CF",
+     "team_name_english": "Malaga CF",
+     "seo_slug": "malaga-cf",
+     "full_name": "Málaga CF",
+     "country": "Spain",
+     "team_logo": "https://footballdata.io/img/team/malaga-cf.png"
+    },
+    "season": {
+     "season_id": 117065,
+     "year": 20262027
+    },
+    "record": {
+     "matches_played": 12,
+     "wins": 0,
+     "draws": 5,
+     "losses": 7,
+     "points": 5,
+     "points_per_game": 0
+    },
+    "goals": {
+     "for": 9,
+     "against": 23,
+     "difference": -14
+    },
+    "home": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "away": {
+     "wins": 0,
+     "draws": 0,
+     "losses": 0,
+     "goals_for": 0,
+     "goals_against": 0
+    },
+    "zone": {
+     "name": null,
+     "number": 0
+    },
+    "corrections": 0,
+    "urls": {
+     "team": "malaga-cf",
+     "overall": null,
+     "home": null,
+     "away": null
+    }
+   }
+  ]
+ },
+ "meta": {
+  "plan": "free",
+  "requests_used": 4,
+  "requests_limit": 1000,
+  "requests_remaining": 996,
+  "coverage_note": "Coverage varies by league and season.",
+  "league_limit": 5,
+  "filters": {
+   "league_id": 10,
+   "season_id": 117065,
+   "year": 20262027
+  }
+ }
+}

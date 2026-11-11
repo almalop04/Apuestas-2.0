@@ -1,14 +1,10 @@
-"""Estadísticas de API-Football: fuerza de ataque/defensa, forma y goles esperados."""
+"""Utilidades comunes del modelo: emparejado de nombres entre APIs, ratings (modo demo) y goles esperados."""
 import re
 import unicodedata
-from datetime import datetime, timezone
 from difflib import SequenceMatcher
 
-import httpx
 
-BASE = "https://v3.football.api-sports.io"
-
-# Nombres que difieren mucho entre The Odds API y API-Football
+# Nombres que difieren mucho entre The Odds API y footballdata.io
 ALIASES = {
     "wolverhampton wanderers": "wolves",
     "brighton and hove albion": "brighton",
@@ -30,23 +26,42 @@ ALIASES = {
     "borussia monchengladbach": "borussia monchengladbach",
     "1 fc koln": "1 fc koln",
     "fc cologne": "1 fc koln",
+    # nombres largos de footballdata.io
+    "reial club deportiu espanyol": "espanyol",
+    "rcd espanyol": "espanyol",
+    "real club deportivo de la coruna": "deportivo la coruna",
+    "deportivo la coruna": "deportivo la coruna",
+    "real racing club de santander": "racing santander",
+    "real club celta de vigo": "celta vigo",
+    "celta de vigo": "celta vigo",
+    "getafe club de futbol": "getafe",
+    "real sociedad de futbol": "real sociedad",
+    "athletic club bilbao": "athletic club",
+    "real betis balompie": "real betis",
+    "fc internazionale milano": "inter",
+    "internazionale milano": "inter",
+    "fc bayern munchen": "bayern munchen",
+    "club atletico de madrid": "atletico madrid",
+    "rc celta de vigo": "celta vigo",
+    "deportivo alaves": "alaves",
+    "rcd espanyol de barcelona": "espanyol",
+    "wolverhampton wanderers fc": "wolves",
+    "brighton and hove albion fc": "brighton",
+    "paris saint germain fc": "paris saint germain",
+    "olympique de marseille": "marseille",
+    "olympique lyonnais": "lyon",
 }
 
 SHRINK_GAMES = 5  # partidos "virtuales" de media de liga para no sobrerreaccionar al principio
 FORM_POINTS = {"W": 3, "D": 1, "L": 0}
 
 
-def current_season(now: datetime | None = None) -> int:
-    now = now or datetime.now(timezone.utc)
-    return now.year if now.month >= 7 else now.year - 1
-
-
 def normalize(name: str) -> str:
-    n = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode().lower()
+    n = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode().lower().replace("&", " and ")
     n = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]", " ", n)).strip()
     if n in ALIASES:
         return ALIASES[n]
-    n = re.sub(r"\b(fc|cf|afc|sc|ac|ssc|club de futbol|calcio)\b", " ", n)
+    n = re.sub(r"\b(fc|cf|afc|sc|ac|ssc|as|ss|club de futbol|calcio|rcd|cd|ud|sd|ca)\b", " ", n)
     n = re.sub(r"\s+", " ", n).strip()
     return ALIASES.get(n, n)
 
@@ -65,58 +80,6 @@ def match_team(name: str, candidates: dict[str, dict]) -> dict | None:
         if score > best_score:
             best, best_score = data, score
     return best if best_score >= 0.7 else None
-
-
-def fetch_standings(client: httpx.Client, league_id: int, api_key: str, season: int | None = None) -> list[dict]:
-    r = client.get(
-        f"{BASE}/standings",
-        params={"league": league_id, "season": season or current_season()},
-        headers={"x-apisports-key": api_key},
-        timeout=20,
-    )
-    r.raise_for_status()
-    data = r.json()
-    if data.get("errors"):
-        raise RuntimeError(f"API-Football: {data['errors']}")
-    resp = data.get("response") or []
-    if not resp:
-        raise RuntimeError("API-Football: sin clasificación para esta liga/temporada")
-    return resp[0]["league"]["standings"][0]
-
-
-def fetch_standings_footballdata(client: httpx.Client, league_id: int, api_key: str) -> list[dict]:
-    """Obtiene la clasificación de footballdata.io y la adapta al formato común."""
-    r = client.get(
-        f"https://footballdata.io/api/v1/leagues/{league_id}/standings",
-        headers={"Authorization": f"Bearer {api_key}"},
-        timeout=20,
-    )
-    r.raise_for_status()
-    data = r.json()
-    if not data.get("success"):
-        raise RuntimeError(f"footballdata.io: {data}")
-    standings_raw = data.get("data", {}).get("standings", [])
-    out = []
-    for s in standings_raw:
-        played = s.get("record", {}).get("matches_played", 0)
-        h_played = max(1, played // 2)
-        a_played = max(1, played - h_played)
-        g_for = s.get("goals", {}).get("for", 0)
-        g_against = s.get("goals", {}).get("against", 0)
-        out.append({
-            "team": {"name": s.get("team", {}).get("team_name")},
-            "rank": s.get("position"),
-            "form": "",
-            "home": {
-                "played": h_played,
-                "goals": {"for": round(g_for * 0.55), "against": round(g_against * 0.45)},
-            },
-            "away": {
-                "played": a_played,
-                "goals": {"for": round(g_for * 0.45), "against": round(g_against * 0.55)},
-            },
-        })
-    return out
 
 
 def _form_ppg(form: str | None) -> float | None:
@@ -141,7 +104,7 @@ def build_ratings(standings: list[dict]) -> dict:
     teams = {}
     for t in standings:
         h, a = t["home"], t["away"]
-        teams[t["team"]["name"]] = {
+        data = {
             "name": t["team"]["name"],
             "rank": t.get("rank"),
             "form": (t.get("form") or "")[-5:],
@@ -151,6 +114,10 @@ def build_ratings(standings: list[dict]) -> dict:
             "att_away": shrunk(a["goals"]["for"], a["played"], avg_away_goals),
             "def_away": shrunk(a["goals"]["against"], a["played"], avg_home_goals),
         }
+        teams[t["team"]["name"]] = data
+        for alt in (t["team"].get("shortName"), t["team"].get("tla")):
+            if alt and alt not in teams:
+                teams[alt] = data  # nombres alternativos para emparejar mejor
     return {"avg_home": avg_home_goals, "avg_away": avg_away_goals, "teams": teams}
 
 

@@ -42,7 +42,7 @@ def _event(soft_home):
 
 
 def test_value_found_vs_pinnacle():
-    s = Settings(odds_api_key="x", api_football_key="", market_weight=1.0)
+    s = Settings(odds_api_key="x", fdio_key="", market_weight=1.0)
     fair = market_probabilities(_event(2.3), "pinnacle")
     assert fair["h2h"]["source"] == "pinnacle"
     picks = analyse_event(_event(2.3), {"name": "Test"}, None, s)

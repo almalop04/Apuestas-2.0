@@ -17,14 +17,17 @@ def _i(name: str, default: int) -> int:
         return default
 
 
-# Ligas analizadas: clave en The Odds API + id en API-Football + id en footballdata.io
-LEAGUES = [
-    {"key": "soccer_spain_la_liga", "name": "LaLiga", "af_id": 140, "fd_id": 10},
-    {"key": "soccer_epl", "name": "Premier League", "af_id": 39, "fd_id": 15},
-    {"key": "soccer_italy_serie_a", "name": "Serie A", "af_id": 135, "fd_id": None},
-    {"key": "soccer_germany_bundesliga", "name": "Bundesliga", "af_id": 78, "fd_id": None},
-    {"key": "soccer_france_ligue_one", "name": "Ligue 1", "af_id": 61, "fd_id": None},
+# Ligas analizadas: clave en The Odds API + id en footballdata.io (verificados en /leagues).
+# El plan gratuito de footballdata.io incluye: Premier (15), LaLiga (10), Champions (45),
+# Europa League (46) y World Cup (50). Se activan con ENABLED_LEAGUES (por código).
+ALL_LEAGUES = [
+    {"code": "PL", "key": "soccer_epl", "name": "Premier League", "fdio_id": 15},
+    {"code": "LALIGA", "key": "soccer_spain_la_liga", "name": "LaLiga", "fdio_id": 10},
+    {"code": "UCL", "key": "soccer_uefa_champs_league", "name": "Champions League", "fdio_id": 45},
+    {"code": "UEL", "key": "soccer_uefa_europa_league", "name": "Europa League", "fdio_id": 46},
 ]
+_enabled = {c.strip().upper() for c in os.getenv("ENABLED_LEAGUES", "PL,LALIGA,UCL,UEL").split(",") if c.strip()}
+LEAGUES = [lg for lg in ALL_LEAGUES if lg["code"] in _enabled]
 
 # Casas que no se usan para apostar (exchanges con comisión)
 EXCLUDED_BOOKS = {"betfair_ex_eu", "betfair_ex_uk", "matchbook", "smarkets"}
@@ -33,12 +36,11 @@ EXCLUDED_BOOKS = {"betfair_ex_eu", "betfair_ex_uk", "matchbook", "smarkets"}
 @dataclass
 class Settings:
     odds_api_key: str = field(default_factory=lambda: os.getenv("ODDS_API_KEY", ""))
-    api_football_key: str = field(default_factory=lambda: os.getenv("API_FOOTBALL_KEY", ""))
-    footballdata_io_key: str = field(
-        default_factory=lambda: os.getenv("FOOTBALLDATA_IO_KEY")
-        or os.getenv("API_KEY_FOOTBALDATA")
-        or ""
-    )
+    fdio_key: str = field(default_factory=lambda: os.getenv("FOOTBALLDATA_IO_KEY", ""))
+    # Modelo de estadísticas
+    xg_weight: float = field(default_factory=lambda: _f("XG_WEIGHT", 0.6))
+    half_life_days: float = field(default_factory=lambda: _f("HALF_LIFE_DAYS", 75))
+    prematch_weight: float = field(default_factory=lambda: _f("PREMATCH_XG_WEIGHT", 0.3))
     refresh_token: str = field(default_factory=lambda: os.getenv("REFRESH_TOKEN", ""))
     regions: str = field(default_factory=lambda: os.getenv("ODDS_REGIONS", "eu"))
     markets: str = field(default_factory=lambda: os.getenv("ODDS_MARKETS", "h2h,totals"))
