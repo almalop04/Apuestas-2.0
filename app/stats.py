@@ -67,19 +67,38 @@ def normalize(name: str) -> str:
 
 
 def match_team(name: str, candidates: dict[str, dict]) -> dict | None:
-    """Empareja un nombre de equipo de las cuotas con la tabla de estadísticas."""
+    """Empareja un nombre de equipo de las cuotas con la tabla de estadísticas.
+
+    Prudente a propósito: si no está claro, devuelve None y ese partido se calcula
+    solo con el mercado (mejor sin modelo que con el equipo equivocado).
+    - Coincidencia exacta tras normalizar -> se acepta.
+    - Si todas las palabras de un nombre están en el otro ("Valencia" / "Valencia CF") -> fuerte.
+    - Si no, solo con un parecido muy alto (>= 0.85): "Manchester United" NO casa con "Manchester City".
+    - Si dos equipos distintos quedan casi empatados -> ambiguo -> None.
+    """
     target = normalize(name)
-    best, best_score = None, 0.0
+    t_tokens = set(target.split())
+    scores: dict[int, tuple[float, dict]] = {}
     for cand_name, data in candidates.items():
         c = normalize(cand_name)
         if c == target:
             return data
-        score = SequenceMatcher(None, target, c).ratio()
-        if target in c or c in target:
-            score = max(score, 0.85)
-        if score > best_score:
-            best, best_score = data, score
-    return best if best_score >= 0.7 else None
+        c_tokens = set(c.split())
+        if t_tokens and c_tokens and (t_tokens <= c_tokens or c_tokens <= t_tokens):
+            score = 0.9
+        else:
+            score = SequenceMatcher(None, target, c).ratio()
+            if score < 0.85:
+                continue
+        key = id(data)
+        if key not in scores or score > scores[key][0]:
+            scores[key] = (score, data)
+    if not scores:
+        return None
+    ranked = sorted(scores.values(), key=lambda x: x[0], reverse=True)
+    if len(ranked) > 1 and ranked[0][0] - ranked[1][0] < 0.05:
+        return None  # ambiguo
+    return ranked[0][1]
 
 
 def _form_ppg(form: str | None) -> float | None:

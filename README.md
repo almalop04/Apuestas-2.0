@@ -13,7 +13,7 @@ Web que analiza cuotas y estadísticas (con xG) de Premier League, LaLiga, Champ
    - Ajuste suave por la forma de los últimos 5 partidos (±7 % como máximo).
    - Los goles esperados resultantes se mezclan con el **xG prepartido** que publica footballdata.io (`PREMATCH_XG_WEIGHT`, 0,3) y se aplica Poisson.
 4. **Probabilidad final** = `MARKET_WEIGHT × mercado + (1 − MARKET_WEIGHT) × modelo`.
-5. **Valor** = probabilidad × mejor cuota en casas blandas − 1. Se queda con una selección por partido y el top 10.
+5. **Valor** = probabilidad × mejor cuota en casas blandas − 1. Solo cuentan selecciones con cuota entre 1,50 y 2,30, probabilidad ≥ 40 % y en las que modelo y mercado no discrepen más de 8 puntos. Se queda con una por partido y el top 10.
 6. **Stake** = Kelly × `KELLY_FRACTION` (¼ por defecto), en % del bank.
 7. **Analista IA (Google Antigravity)**: los 15 mejores candidatos se envían al agente de Antigravity (Gemini API, Interactions API). El agente busca bajas, rotaciones, motivación y noticias, y devuelve un veredicto por pick (mantener / reducir stake / descartar), un ajuste de probabilidad limitado a ±3 puntos y el motivo con sus fuentes. Va en segundo plano y la página se actualiza sola al terminar.
 
@@ -71,13 +71,15 @@ pytest -q
 | `ENABLED_LEAGUES` | PL,LALIGA,UCL,UEL | Ligas activas |
 | `NUM_PICKS` | 10 | Número máximo de picks |
 | `MIN_EDGE` | 0.02 | Valor mínimo (2 %) |
-| `MIN_ODDS` / `MAX_ODDS` | 1.5 / 5.0 | Rango de cuotas |
+| `MIN_ODDS` / `MAX_ODDS` | 1.5 / 2.3 | Rango de cuotas |
+| `MIN_PROB` | 0.40 | Probabilidad mínima de la selección (evita sorpresas) |
+| `MAX_MODEL_GAP` | 0.08 | Si modelo y mercado discrepan más, se descarta el pick |
 | `MARKET_WEIGHT` | 0.7 | 1 = solo mercado, 0 = solo modelo |
 | `XG_WEIGHT` | 0.6 | Peso del xG frente a los goles reales |
 | `HALF_LIFE_DAYS` | 75 | Semivida del peso de los partidos (dinámica) |
 | `PREMATCH_XG_WEIGHT` | 0.3 | Mezcla con el xG prepartido de footballdata.io (0 lo desactiva) |
 | `KELLY_FRACTION` | 0.25 | Fracción de Kelly para el stake |
-| `DAYS_AHEAD` | 7 | Ventana de partidos |
+| `DAYS_AHEAD` | 10 | Ventana de partidos |
 | `CACHE_HOURS` | 24 | Cada cuánto se regeneran los picks |
 | `SHARP_BOOK` | pinnacle | Casa de referencia |
 | `ANALYST_ENABLED` | auto | `0` apaga el analista aunque haya clave |

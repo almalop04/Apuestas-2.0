@@ -71,7 +71,7 @@ def parse_verdicts(text: str) -> list[dict]:
 def _run_antigravity(prompt: str, s: Settings) -> str:
     from google import genai  # import diferido: solo si se usa el analista
 
-    client = genai.Client(api_key=s.gemini_api_key, http_options={"api_version": "v1beta"})
+    client = genai.Client(api_key=s.gemini_api_key)
     interaction = client.interactions.create(
         agent=s.analyst_agent,
         input=prompt,
@@ -141,7 +141,7 @@ def apply_verdicts(picks: list[dict], verdicts: list[dict], s: Settings) -> tupl
             "reason": str(v.get("reason", ""))[:600],
             "sources": [u for u in (v.get("sources") or []) if isinstance(u, str) and u.startswith("http")][:4],
         }
-        if verdict == "descartar" or p["edge"] < s.min_edge:
+        if verdict == "descartar" or p["edge"] < s.min_edge or p["prob"] < s.min_prob:
             discarded.append(p)
         else:
             kept.append(p)

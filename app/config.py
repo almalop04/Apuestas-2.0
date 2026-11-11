@@ -2,10 +2,6 @@
 import os
 from dataclasses import dataclass, field
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 
 def _f(name: str, default: float) -> float:
     try:
@@ -50,11 +46,15 @@ class Settings:
     markets: str = field(default_factory=lambda: os.getenv("ODDS_MARKETS", "h2h,totals"))
     sharp_book: str = field(default_factory=lambda: os.getenv("SHARP_BOOK", "pinnacle"))
     cache_hours: float = field(default_factory=lambda: _f("CACHE_HOURS", 24))
-    days_ahead: int = field(default_factory=lambda: _i("DAYS_AHEAD", 14))
+    days_ahead: int = field(default_factory=lambda: _i("DAYS_AHEAD", 10))
     num_picks: int = field(default_factory=lambda: _i("NUM_PICKS", 10))
     min_edge: float = field(default_factory=lambda: _f("MIN_EDGE", 0.02))
     min_odds: float = field(default_factory=lambda: _f("MIN_ODDS", 1.5))
-    max_odds: float = field(default_factory=lambda: _f("MAX_ODDS", 5.0))
+    max_odds: float = field(default_factory=lambda: _f("MAX_ODDS", 2.3))
+    # Probabilidad mínima de la selección (evita "sorpresas" aunque tengan valor matemático)
+    min_prob: float = field(default_factory=lambda: _f("MIN_PROB", 0.40))
+    # Si modelo y mercado discrepan más que esto, se descarta (casi siempre es error del modelo)
+    max_model_gap: float = field(default_factory=lambda: _f("MAX_MODEL_GAP", 0.08))
     # Peso del mercado frente al modelo de estadísticas (0..1)
     market_weight: float = field(default_factory=lambda: _f("MARKET_WEIGHT", 0.7))
     kelly_fraction: float = field(default_factory=lambda: _f("KELLY_FRACTION", 0.25))

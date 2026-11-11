@@ -52,9 +52,36 @@ def test_value_found_vs_pinnacle():
 
 
 def test_demo_generation():
-    data = generate(Settings(odds_api_key="", demo_env="1"))
+    data = generate(Settings(odds_api_key="", demo_env="1", max_odds=5.0, min_prob=0.0, max_model_gap=1.0))
     assert data["demo"] and data["matches_analysed"] > 0
     assert len(data["picks"]) <= 10
     edges = [p["edge"] for p in data["picks"]]
     assert edges == sorted(edges, reverse=True)
     assert any(p.get("xg_home") for p in data["picks"]), "el modelo de estadísticas debe emparejar equipos"
+
+
+def test_manchester_united_never_matches_city():
+    teams = {"Manchester City FC": {"id": 1}, "Liverpool FC": {"id": 2}}
+    assert match_team("Manchester United", teams) is None
+    assert match_team("Manchester City", teams)["id"] == 1
+    both = {"Manchester City FC": {"id": 1}, "Manchester United FC": {"id": 3}}
+    assert match_team("Manchester United", both)["id"] == 3
+    assert match_team("Man Utd", both) is None  # mejor sin modelo que con el equipo equivocado
+
+
+def test_longshots_and_model_disagreement_are_filtered():
+    from app.picks import analyse_event
+    s = Settings(odds_api_key="x", market_weight=1.0)  # rango 1.5-2.3, prob mín 40 %
+    def ev(home_soft):
+        def book(key, h, d, a):
+            return {"key": key, "title": key, "markets": [{"key": "h2h", "outcomes": [
+                {"name": "Liverpool", "price": h}, {"name": "Draw", "price": d}, {"name": "Man United", "price": a}]}]}
+        return {"home_team": "Liverpool", "away_team": "Man United", "commence_time": "2026-11-22T15:00:00Z",
+                "bookmakers": [book("pinnacle", 1.55, 4.4, 5.6), book("bet365", home_soft, 4.0, 6.5)]}
+    # La sorpresa a 6.5 tendría "valor" pero queda fuera por cuota y probabilidad
+    picks = analyse_event(ev(1.5), {"name": "PL"}, None, s)
+    assert all(p["selection"] != "Gana Man United" for p in picks)
+    # Favorito con valor dentro del rango -> sí sale
+    picks = analyse_event(ev(1.75), {"name": "PL"}, None, s)
+    assert [p["selection"] for p in picks] == ["Gana Liverpool"]
+    assert picks[0]["prob"] >= 0.40

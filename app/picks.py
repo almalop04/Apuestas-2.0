@@ -1,7 +1,6 @@
 """Genera los picks: junta cuotas + estadísticas, calcula valor y guarda en caché."""
 import json
 import logging
-import tempfile
 import threading
 import time
 from datetime import datetime, timezone
@@ -17,7 +16,7 @@ from .fdio import FdioClient, league_ratings
 from .stats import build_ratings, expected_goals, match_team
 
 log = logging.getLogger("picks")
-CACHE_FILE = Path(tempfile.gettempdir()) / "picks_cache.json"
+CACHE_FILE = Path("/tmp/picks_cache.json")
 _lock = threading.Lock()
 _cache: dict | None = None
 
@@ -81,8 +80,10 @@ def analyse_event(ev: dict, league: dict, ratings: dict | None, s: Settings) -> 
                 prob = p_market
             odds = offer["price"]
             edge = prob * odds - 1
-            if edge < s.min_edge or not (s.min_odds <= odds <= s.max_odds):
+            if edge < s.min_edge or not (s.min_odds <= odds <= s.max_odds) or prob < s.min_prob:
                 continue
+            if p_model is not None and abs(p_model - p_market) > s.max_model_gap:
+                continue  # discrepancia demasiado grande: desconfiamos del modelo
             out.append(
                 {
                     "league": league["name"],
@@ -182,6 +183,8 @@ def generate(s: Settings) -> dict:
             "min_edge": s.min_edge,
             "min_odds": s.min_odds,
             "max_odds": s.max_odds,
+            "min_prob": s.min_prob,
+            "max_model_gap": s.max_model_gap,
             "market_weight": s.market_weight,
             "kelly_fraction": s.kelly_fraction,
             "days_ahead": s.days_ahead,

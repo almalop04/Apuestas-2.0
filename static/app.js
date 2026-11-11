@@ -89,7 +89,9 @@ function render(data) {
 
   $("#picks").innerHTML = data.picks.length
     ? data.picks.map(pickCard).join("")
-    : `<div class="empty">Esta semana no hay selecciones que superen el umbral de valor (${pct(data.settings.min_edge)}). Mejor no apostar que forzarlo.</div>`;
+    : data.matches_analysed === 0
+      ? `<div class="empty">No hay partidos con cuotas en los próximos ${esc(data.settings.days_ahead)} días (¿parón internacional?). Prueba a subir <code>DAYS_AHEAD</code> en Render.</div>`
+      : `<div class="empty">Se han analizado ${esc(data.matches_analysed)} partidos y ninguna selección supera el umbral de valor (${pct(data.settings.min_edge)}). Mejor no apostar que forzarlo.</div>`;
 
   $("#discarded").innerHTML = data.discarded?.length
     ? `<details><summary>Descartados por el analista (${data.discarded.length})</summary><div class="picks">${data.discarded.map(pickCard).join("")}</div></details>`
