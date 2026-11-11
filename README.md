@@ -15,7 +15,7 @@ Web que analiza cuotas y estadísticas (con xG) de Premier League, LaLiga, Champ
 4. **Probabilidad final** = `MARKET_WEIGHT × mercado + (1 − MARKET_WEIGHT) × modelo`.
 5. **Valor** = probabilidad × mejor cuota en casas blandas − 1. Solo cuentan selecciones con cuota entre 1,50 y 2,30, probabilidad ≥ 40 % y en las que modelo y mercado no discrepen más de 8 puntos. Se queda con una por partido y el top 10.
 6. **Stake** = Kelly × `KELLY_FRACTION` (¼ por defecto), en % del bank.
-7. **Analista IA**: por defecto **Gemini con búsqueda de Google** (`ANALYST_PROVIDER=gemini`, modelo `ANALYST_MODEL=gemini-2.5-flash`); opcionalmente el agente de Google Antigravity (`ANALYST_PROVIDER=antigravity`), que en las pruebas tardó más de 20 minutos por partido. El analista busca bajas, rotaciones, motivación y noticias, y devuelve un veredicto por pick (mantener / reducir stake / descartar), un ajuste de probabilidad limitado a ±3 puntos y el motivo con sus fuentes. Va en segundo plano y por lotes de 3 picks (3 lotes en paralelo). Una barra muestra el progreso real (picks revisados / total) y la página se actualiza sola al terminar. Si falla un lote, sus picks quedan "sin análisis" y el resto se aplica.
+7. **Analista IA (gratis por defecto)**: para cada candidato el código busca las noticias de los últimos 7 días de los dos equipos en **Google News RSS** (gratis, sin clave; castellano para LaLiga, inglés para el resto) y, si pones `TAVILY_API_KEY`, también en **Tavily** (1.000 búsquedas gratis/mes). Se las pasa a **Gemini 3.8 Flash sin búsqueda propia** (gratis en el plan gratuito, ~20 peticiones/día), que solo lee esas noticias y devuelve un veredicto por pick (mantener / reducir stake / descartar), un ajuste de probabilidad limitado a ±3 puntos y el motivo con enlaces a esas noticias. Va en segundo plano, en lotes de 5 picks (≈3 llamadas por actualización), con barra de progreso. Alternativas: `ANALYST_SEARCH=google` (búsqueda de Google integrada; en Gemini 3 requiere facturación) o `ANALYST_PROVIDER=antigravity` (agente; en las pruebas tardó más de 20 min por partido).
 
 ### Lo que se ha comprobado de footballdata.io (con respuestas reales, plan gratuito)
 
@@ -83,12 +83,15 @@ pytest -q
 | `CACHE_HOURS` | 24 | Cada cuánto se regeneran los picks |
 | `SHARP_BOOK` | pinnacle | Casa de referencia |
 | `ANALYST_PROVIDER` | gemini | `gemini` (modelo + búsqueda de Google) o `antigravity` (agente) |
-| `ANALYST_MODEL` | gemini-2.5-flash | Modelo de Gemini (solo con `gemini`) |
+| `ANALYST_MODEL` | gemini-3.8-flash | Modelo de Gemini (solo con `gemini`) |
+| `ANALYST_SEARCH` | news | `news` (Google News + Tavily, gratis) o `google` (búsqueda integrada, de pago en Gemini 3) |
+| `TAVILY_API_KEY` | (vacía) | Opcional: añade fragmentos de noticias de Tavily |
+| `ANALYST_NEWS_PER_PICK` | 12 | Máximo de noticias que se pasan por partido |
 | `ANALYST_ENABLED` | auto | `0` apaga el analista aunque haya clave |
 | `ANALYST_CANDIDATES` | 15 | Candidatos que revisa el agente |
 | `ANALYST_MAX_ADJUST` | 0.03 | Ajuste máximo de probabilidad del agente |
 | `ANALYST_TIMEOUT` | 300 | Segundos máximos de espera al agente (por lote) |
-| `ANALYST_BATCH_SIZE` | 3 | Picks por llamada al agente (cada lote completado avanza la barra) |
+| `ANALYST_BATCH_SIZE` | 5 | Picks por llamada al agente (cada lote completado avanza la barra) |
 | `ANALYST_CONCURRENCY` | 3 | Lotes que se analizan a la vez |
 | `ANALYST_AGENT` | antigravity-preview-05-2026 | Id del agente |
 | `ANALYST_MAX_TOKENS` | 0 (sin tope) | Límite de tokens de cada ejecución del agente |
@@ -107,7 +110,8 @@ app/
   odds.py       cliente The Odds API
   fdio.py       cliente footballdata.io y ratings con xG
   stats.py      emparejado de nombres entre APIs y goles esperados
-  analyst.py    analista IA con el agente de Google Antigravity
+  analyst.py    analista IA (Gemini; opcional agente Antigravity)
+  news.py       noticias gratis: Google News RSS + Tavily opcional
   demo_data.py  datos ficticios
 static/         página (HTML/CSS/JS)
 tests/          tests (+ fixtures con respuestas reales de footballdata.io)

@@ -342,10 +342,48 @@ def test_gemini_with_google_search_mocked(monkeypatch):
     monkeypatch.setitem(sys.modules, "google.genai.types", real_types)
     monkeypatch.setattr(google, "genai", fake, raising=False)
 
-    s = Settings(odds_api_key="x", gemini_api_key="k")
-    assert s.analyst_provider == "gemini" and s.analyst_model == "gemini-2.5-flash"
+    s = Settings(odds_api_key="x", gemini_api_key="k", analyst_search="google", analyst_model="gemini-2.5-flash")
     kept, discarded, source = analyst.analyse([_pick()], s, "2026-11-11")
     assert source == "gemini"
     assert seen["model"] == "gemini-2.5-flash" and seen["tools"][0].google_search is not None
     assert seen["http"] == {"api_version": "v1beta", "timeout": 300000}
     assert kept[0]["analysis"]["verdict"] == "reducir" and kept[0]["prob"] == 0.412
+
+
+def test_free_news_mode_passes_news_and_no_tools(monkeypatch):
+    """Modo por defecto: noticias de Google News en el prompt y Gemini 3.8 Flash SIN herramienta de búsqueda."""
+    import google
+    from google.genai import types as real_types
+    from app import news
+    seen = {}
+
+    class Resp:
+        text = '[{"id":"c1","verdict":"descartar","prob_adjust":-0.03,"reason":"Baja confirmada.","sources":["https://n/1"]}]'
+        usage_metadata = None
+        candidates = []
+
+    class Models:
+        def generate_content(self, model, contents, config):
+            seen["model"], seen["tools"], seen["prompt"] = model, config.tools, contents
+            return Resp()
+
+    class Client:
+        def __init__(self, api_key, http_options=None):
+            self.models = Models()
+
+    fake = types.ModuleType("google.genai")
+    fake.Client = Client
+    fake.types = real_types
+    monkeypatch.setitem(sys.modules, "google.genai", fake)
+    monkeypatch.setitem(sys.modules, "google.genai.types", real_types)
+    monkeypatch.setattr(google, "genai", fake, raising=False)
+    monkeypatch.setattr(news, "news_for_pick", lambda http, c, key: (
+        [{"title": "A es baja para el sábado", "url": "https://n/1", "date": "2026-11-10", "team": "A"}], []))
+
+    s = Settings(odds_api_key="x", gemini_api_key="k")
+    assert (s.analyst_provider, s.analyst_search, s.analyst_model, s.analyst_batch_size) == (
+        "gemini", "news", "gemini-3.8-flash", 5)
+    kept, discarded, source = analyst.analyse([_pick()], s, "2026-11-11")
+    assert seen["model"] == "gemini-3.8-flash" and not seen["tools"]
+    assert "A es baja para el sábado" in seen["prompt"] and "Lee SOLO sus" in seen["prompt"]
+    assert discarded[0]["analysis"]["sources"] == ["https://n/1"]

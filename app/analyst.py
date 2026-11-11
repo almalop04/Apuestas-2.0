@@ -62,6 +62,40 @@ Candidatos:
 """
 
 
+PROMPT_NEWS = """Eres un analista de apuestas de fútbol riguroso y escéptico.
+Tienes una lista de selecciones candidatas. Para cada una, un modelo estadístico ya ha calculado
+la probabilidad ("prob") y el valor esperado ("edge") frente a la mejor cuota disponible.
+Cada candidato incluye en "noticias" los titulares (y a veces fragmentos) de los últimos 7 días
+sobre los dos equipos, sacados de Google News y otras fuentes.
+
+Tu trabajo NO es recalcular probabilidades desde cero. Para CADA candidato:
+1. Lee SOLO sus "noticias": lesiones y sanciones de titulares, posibles rotaciones,
+   motivación, cambios de entrenador, clima extremo.
+2. Decide si esa información cambia la probabilidad de la selección concreta.
+3. Si las noticias no dicen nada relevante (o no hay), el veredicto es "mantener" con ajuste 0.
+   No uses conocimiento propio sobre plantillas o lesiones: puede estar desactualizado. No inventes.
+
+Devuelve ÚNICAMENTE un bloque JSON válido, sin texto adicional, con este formato:
+```json
+[
+  {{"id": "c1", "verdict": "mantener|reducir|descartar", "prob_adjust": 0.0,
+    "reason": "2-3 frases en castellano con los hechos concretos", "sources": ["https://..."]}}
+]
+```
+Reglas:
+- "prob_adjust" es el cambio en probabilidad absoluta, entre -{max_adj} y +{max_adj} (p. ej. -0.02).
+- "descartar" solo con información concreta de las noticias (p. ej. baja confirmada de una pieza clave).
+- "reducir" si hay dudas razonables.
+- "sources": SOLO URLs que aparezcan en las "noticias" de ese candidato y que hayas usado.
+- Un objeto por cada id recibido, sin omitir ninguno.
+
+Fecha actual (UTC): {today}
+
+Candidatos:
+{candidates}
+"""
+
+
 def _candidate_payload(picks: list[dict]) -> list[dict]:
     keys = ("league", "home", "away", "kickoff", "selection", "odds", "bookmaker",
             "prob", "prob_market", "prob_model", "edge", "form_home", "form_away",
@@ -262,8 +296,9 @@ def apply_verdicts(picks: list[dict], verdicts: list[dict], s: Settings) -> tupl
     return kept[: s.num_picks], discarded
 
 
-def _run_gemini(prompt: str, s: Settings, label: str = "") -> str:
-    """Llamada normal a un modelo Gemini con búsqueda de Google integrada (sin agente ni máquina en la nube)."""
+def _run_gemini(prompt: str, s: Settings, label: str = "", google_search: bool = True) -> str:
+    """Llamada normal a un modelo Gemini (sin agente). Con google_search=True usa la búsqueda
+    de Google integrada (de pago en Gemini 3); con False solo lee las noticias que le pasamos (gratis)."""
     from google import genai  # import diferido
     from google.genai import types
 
@@ -272,15 +307,13 @@ def _run_gemini(prompt: str, s: Settings, label: str = "") -> str:
         http_options={"api_version": s.analyst_api_version, "timeout": int(s.analyst_timeout * 1000)},
     )
     start = time.time()
-    log.info("Gemini %s: consultando %s con búsqueda de Google", label, s.analyst_model)
+    log.info("Gemini %s: consultando %s %s", label, s.analyst_model,
+             "con búsqueda de Google" if google_search else "con noticias de Google News")
+    cfg = {"temperature": 0.2}
+    if google_search:
+        cfg["tools"] = [types.Tool(google_search=types.GoogleSearch())]
     resp = client.models.generate_content(
-        model=s.analyst_model,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            tools=[types.Tool(google_search=types.GoogleSearch())],
-            temperature=0.2,
-        ),
-    )
+        model=s.analyst_model, contents=prompt, config=types.GenerateContentConfig(**cfg))
     queries, sources = [], []
     try:
         gm = resp.candidates[0].grounding_metadata
@@ -304,14 +337,30 @@ def _analyse_batch(batch: list[dict], s: Settings, today: str, should_stop=None)
     if not s.gemini_api_key:
         time.sleep(s.analyst_demo_delay)  # solo para que la barra se vea en modo demo
         return _simulated(batch, s)
-    prompt = PROMPT.format(
-        max_adj=s.analyst_max_adjust, today=today,
-        candidates=json.dumps(batch, ensure_ascii=False, indent=1),
-    )
     label = ",".join(c["id"] for c in batch)
     if s.analyst_provider == "antigravity":
+        prompt = PROMPT.format(max_adj=s.analyst_max_adjust, today=today,
+                               candidates=json.dumps(batch, ensure_ascii=False, indent=1))
         return parse_verdicts(_run_antigravity(prompt, s, should_stop, label=label))
-    return parse_verdicts(_run_gemini(prompt, s, label=label))
+    if s.analyst_search == "google":
+        prompt = PROMPT.format(max_adj=s.analyst_max_adjust, today=today,
+                               candidates=json.dumps(batch, ensure_ascii=False, indent=1))
+        return parse_verdicts(_run_gemini(prompt, s, label=label, google_search=True))
+    # Modo gratuito: buscamos nosotros las noticias y Gemini solo las lee
+    import httpx
+
+    from .news import news_for_pick
+    enriched, total, failed = [], 0, 0
+    with httpx.Client(follow_redirects=True) as http:
+        for c in batch:
+            items, errors = news_for_pick(http, c, s.tavily_key)
+            total += len(items)
+            failed += bool(errors)
+            enriched.append({**c, "noticias": items[: s.analyst_news_per_pick]})
+    log.info("Noticias %s: %d titulares (%d partidos con errores de búsqueda)", label, total, failed)
+    prompt = PROMPT_NEWS.format(max_adj=s.analyst_max_adjust, today=today,
+                                candidates=json.dumps(enriched, ensure_ascii=False, indent=1))
+    return parse_verdicts(_run_gemini(prompt, s, label=label, google_search=False))
 
 
 def analyse(picks: list[dict], s: Settings, today: str, progress=None,
