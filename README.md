@@ -92,7 +92,7 @@ pytest -q
 | `ANALYST_MAX_TOKENS` | 0 (sin tope) | Límite de tokens de cada ejecución del agente |
 | `ANALYST_AGENT_MODEL` | (el del agente) | Modelo con el que razona el agente |
 | `ANALYST_TOOLS` | google_search,url_context | Herramientas del agente (vacío = las suyas por defecto) |
-| `ANALYST_PROBE_EVERY` | 300 | Cada cuántos segundos escuchar en directo al agente (diagnóstico; 0 = nunca) |
+| `ANALYST_PROBE_EVERY` | 0 | Escucha en directo del agente (diagnóstico). Desactivada: al cerrar la escucha Google canceló al agente en las pruebas |
 | `ANALYST_API_VERSION` | v1beta | Versión de la API de Gemini (el agente solo existe en v1beta) |
 
 ## Estructura
