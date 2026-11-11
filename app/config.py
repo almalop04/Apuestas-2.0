@@ -66,6 +66,9 @@ class Settings:
     analyst_max_adjust: float = field(default_factory=lambda: _f("ANALYST_MAX_ADJUST", 0.03))
     analyst_timeout: float = field(default_factory=lambda: _f("ANALYST_TIMEOUT", 900))
     analyst_env: str = field(default_factory=lambda: os.getenv("ANALYST_ENABLED", ""))
+    analyst_batch_size: int = field(default_factory=lambda: _i("ANALYST_BATCH_SIZE", 3))
+    analyst_concurrency: int = field(default_factory=lambda: _i("ANALYST_CONCURRENCY", 3))
+    analyst_demo_delay: float = field(default_factory=lambda: _f("ANALYST_DEMO_DELAY", 2.0))
 
     @property
     def analyst(self) -> bool:

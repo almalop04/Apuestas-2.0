@@ -149,18 +149,46 @@ def apply_verdicts(picks: list[dict], verdicts: list[dict], s: Settings) -> tupl
     return kept[: s.num_picks], discarded
 
 
-def analyse(picks: list[dict], s: Settings, today: str) -> tuple[list[dict], list[dict], str]:
-    """Devuelve (picks, descartados, fuente)."""
+def _analyse_batch(batch: list[dict], s: Settings, today: str) -> list[dict]:
+    if not s.gemini_api_key:
+        time.sleep(s.analyst_demo_delay)  # solo para que la barra se vea en modo demo
+        return _simulated(batch, s)
+    prompt = PROMPT.format(
+        max_adj=s.analyst_max_adjust, today=today,
+        candidates=json.dumps(batch, ensure_ascii=False, indent=1),
+    )
+    return parse_verdicts(_run_antigravity(prompt, s))
+
+
+def analyse(picks: list[dict], s: Settings, today: str, progress=None) -> tuple[list[dict], list[dict], str]:
+    """Revisa los candidatos en lotes (en paralelo) e informa del progreso real.
+
+    progress(done, total, errors) se llama cada vez que termina un lote.
+    Si un lote falla, sus picks quedan "sin análisis"; si fallan todos, se lanza error.
+    """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
     payload = _candidate_payload(picks)
-    if s.gemini_api_key:
-        prompt = PROMPT.format(
-            max_adj=s.analyst_max_adjust, today=today,
-            candidates=json.dumps(payload, ensure_ascii=False, indent=1),
-        )
-        verdicts = parse_verdicts(_run_antigravity(prompt, s))
-        source = "antigravity"
-    else:
-        verdicts = _simulated(payload, s)
-        source = "simulado"
+    size = max(1, s.analyst_batch_size)
+    batches = [payload[i:i + size] for i in range(0, len(payload), size)]
+    verdicts: list[dict] = []
+    errors: list[str] = []
+    done = 0
+    if progress:
+        progress(0, len(payload), errors)
+    with ThreadPoolExecutor(max_workers=max(1, s.analyst_concurrency)) as pool:
+        futures = {pool.submit(_analyse_batch, b, s, today): b for b in batches}
+        for fut in as_completed(futures):
+            batch = futures[fut]
+            try:
+                verdicts.extend(fut.result())
+            except Exception as e:  # noqa: BLE001
+                log.warning("Lote del analista fallido: %s", e)
+                errors.append(str(e)[:200])
+            done += len(batch)
+            if progress:
+                progress(done, len(payload), errors)
+    if errors and len(errors) == len(batches):
+        raise RuntimeError(errors[0])
     kept, discarded = apply_verdicts(picks, verdicts, s)
-    return kept, discarded, source
+    return kept, discarded, ("antigravity" if s.gemini_api_key else "simulado")

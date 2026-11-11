@@ -15,7 +15,7 @@ Web que analiza cuotas y estadísticas (con xG) de Premier League, LaLiga, Champ
 4. **Probabilidad final** = `MARKET_WEIGHT × mercado + (1 − MARKET_WEIGHT) × modelo`.
 5. **Valor** = probabilidad × mejor cuota en casas blandas − 1. Solo cuentan selecciones con cuota entre 1,50 y 2,30, probabilidad ≥ 40 % y en las que modelo y mercado no discrepen más de 8 puntos. Se queda con una por partido y el top 10.
 6. **Stake** = Kelly × `KELLY_FRACTION` (¼ por defecto), en % del bank.
-7. **Analista IA (Google Antigravity)**: los 15 mejores candidatos se envían al agente de Antigravity (Gemini API, Interactions API). El agente busca bajas, rotaciones, motivación y noticias, y devuelve un veredicto por pick (mantener / reducir stake / descartar), un ajuste de probabilidad limitado a ±3 puntos y el motivo con sus fuentes. Va en segundo plano y la página se actualiza sola al terminar.
+7. **Analista IA (Google Antigravity)**: los 15 mejores candidatos se envían al agente de Antigravity (Gemini API, Interactions API). El agente busca bajas, rotaciones, motivación y noticias, y devuelve un veredicto por pick (mantener / reducir stake / descartar), un ajuste de probabilidad limitado a ±3 puntos y el motivo con sus fuentes. Va en segundo plano y por lotes de 3 picks (3 lotes en paralelo). Una barra muestra el progreso real (picks revisados / total) y la página se actualiza sola al terminar. Si falla un lote, sus picks quedan "sin análisis" y el resto se aplica.
 
 ### Lo que se ha comprobado de footballdata.io (con respuestas reales, plan gratuito)
 
@@ -85,7 +85,9 @@ pytest -q
 | `ANALYST_ENABLED` | auto | `0` apaga el analista aunque haya clave |
 | `ANALYST_CANDIDATES` | 15 | Candidatos que revisa el agente |
 | `ANALYST_MAX_ADJUST` | 0.03 | Ajuste máximo de probabilidad del agente |
-| `ANALYST_TIMEOUT` | 900 | Segundos máximos de espera al agente |
+| `ANALYST_TIMEOUT` | 900 | Segundos máximos de espera al agente (por lote) |
+| `ANALYST_BATCH_SIZE` | 3 | Picks por llamada al agente (cada lote completado avanza la barra) |
+| `ANALYST_CONCURRENCY` | 3 | Lotes que se analizan a la vez |
 | `ANALYST_AGENT` | antigravity-preview-05-2026 | Id del agente |
 
 ## Estructura

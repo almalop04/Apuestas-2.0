@@ -38,6 +38,11 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
 
 .banner.ai { background: rgba(120, 140, 255, 0.08); border: 1px solid rgba(120, 140, 255, 0.35); color: #b8c2ff; }
 .banner.ai.done { background: var(--panel); }
+.progress { margin-top: 10px; height: 8px; background: rgba(120, 140, 255, 0.15); border-radius: 999px; overflow: hidden; }
+.progress .bar { height: 100%; background: #7d8cff; border-radius: 999px; transition: width 0.6s ease; }
+.progress .bar.indeterminate { width: 30%; animation: slide 1.2s ease-in-out infinite; }
+@keyframes slide { 0% { margin-left: -30%; } 100% { margin-left: 100%; } }
+.ptext { margin-top: 6px; font-size: 12px; color: var(--muted); font-family: var(--mono); }
 
 .analysis { margin-top: 12px; padding: 10px 12px; border-left: 3px solid #7d8cff; background: var(--panel-2); border-radius: 0 8px 8px 0; font-size: 13px; }
 .analysis p { margin: 4px 0 0; color: var(--muted); }

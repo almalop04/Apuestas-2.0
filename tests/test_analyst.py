@@ -73,7 +73,7 @@ def test_antigravity_flow_mocked(monkeypatch):
 def test_background_analysis_updates_cache(monkeypatch, tmp_path):
     monkeypatch.setattr(picks, "CACHE_FILE", tmp_path / "c.json")
     monkeypatch.setattr(picks, "_cache", None)
-    s = Settings(odds_api_key="", demo_env="1", max_odds=5.0, min_prob=0.0, max_model_gap=1.0)
+    s = Settings(odds_api_key="", demo_env="1", max_odds=5.0, min_prob=0.0, max_model_gap=1.0, analyst_demo_delay=0)
     first = picks.get_picks(s, force=True)
     assert first["analysis"]["status"] == "pending" and "pool" not in first
     for _ in range(50):
@@ -81,6 +81,35 @@ def test_background_analysis_updates_cache(monkeypatch, tmp_path):
         if data["analysis"]["status"] != "pending":
             break
         time.sleep(0.05)
-    assert data["analysis"] == {"status": "done", "source": "simulado", "error": None}
+    a = data["analysis"]
+    assert (a["status"], a["source"], a["error"]) == ("done", "simulado", None)
+    assert a["progress"]["done"] == a["progress"]["total"] > 0
     assert all("analysis" in p for p in data["picks"])
     assert len(data["picks"]) <= 10
+
+
+def test_progress_by_batches_and_partial_failure(monkeypatch):
+    s = Settings(odds_api_key="x", gemini_api_key="k", analyst_batch_size=2, analyst_concurrency=1)
+    ps = [_pick(edge=0.08 - i * 0.001) for i in range(5)]  # 5 picks -> lotes de 2, 2, 1
+
+    def fake_batch(batch, s_, today):
+        if batch[0]["id"] == "c3":
+            raise RuntimeError("timeout")
+        return [{"id": c["id"], "verdict": "mantener", "prob_adjust": 0, "reason": "ok"} for c in batch]
+
+    monkeypatch.setattr(analyst, "_analyse_batch", fake_batch)
+    seen = []
+    kept, discarded, source = analyst.analyse(ps, s, "2026-11-11", progress=lambda d, t, e: seen.append((d, t, len(e))))
+    assert seen == [(0, 5, 0), (2, 5, 0), (4, 5, 1), (5, 5, 1)]
+    verdicts = sorted(p["analysis"]["verdict"] for p in kept)
+    assert verdicts.count("sin análisis") == 2 and verdicts.count("mantener") == 3
+
+
+def test_all_batches_failed_raises(monkeypatch):
+    s = Settings(odds_api_key="x", gemini_api_key="k", analyst_batch_size=2)
+    monkeypatch.setattr(analyst, "_analyse_batch", lambda b, s_, t: (_ for _ in ()).throw(RuntimeError("caído")))
+    try:
+        analyst.analyse([_pick(), _pick()], s, "2026-11-11")
+        assert False
+    except RuntimeError as e:
+        assert "caído" in str(e)

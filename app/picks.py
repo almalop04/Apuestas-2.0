@@ -215,8 +215,18 @@ def _save() -> None:
 def _run_analysis(snapshot_id: str, pool: list[dict], s: Settings) -> None:
     """Hilo en segundo plano: el agente revisa los candidatos y actualiza la caché."""
     global _analysis_running
+    started = datetime.now(timezone.utc).isoformat()
+
+    def progress(done: int, total: int, errors: list[str]) -> None:
+        with _lock:
+            if _cache and _cache["generated_at"] == snapshot_id:
+                _cache["analysis"]["progress"] = {
+                    "done": done, "total": total, "failed_batches": len(errors), "started_at": started,
+                }
+
     try:
-        kept, discarded, source = analyst.analyse(pool, s, datetime.now(timezone.utc).date().isoformat())
+        kept, discarded, source = analyst.analyse(
+            pool, s, datetime.now(timezone.utc).date().isoformat(), progress=progress)
         result = {"status": "done", "source": source, "error": None}
     except Exception as e:  # noqa: BLE001
         log.exception("Fallo del analista")
@@ -226,6 +236,7 @@ def _run_analysis(snapshot_id: str, pool: list[dict], s: Settings) -> None:
         _analysis_running = False
         if not _cache or _cache["generated_at"] != snapshot_id:
             return  # los picks se regeneraron mientras tanto
+        result["progress"] = _cache["analysis"].get("progress")
         _cache["analysis"] = result
         if kept is not None:
             _cache["picks"] = kept
@@ -255,4 +266,4 @@ def get_picks(s: Settings, force: bool = False) -> dict:
             _cache = generate(s)
             _save()
         _maybe_start_analysis(s)
-        return {k: v for k, v in _cache.items() if k != "pool"}
+        return json.loads(json.dumps({k: v for k, v in _cache.items() if k != "pool"}))  # copia

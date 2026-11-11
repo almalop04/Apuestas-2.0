@@ -25,6 +25,15 @@ function analysisBlock(a) {
 
 let pollTimer = null;
 
+function progressBar(pr) {
+  if (!pr || !pr.total) return `<div class="progress"><div class="bar indeterminate"></div></div><div class="ptext">Preparando el análisis…</div>`;
+  const pctDone = Math.round((pr.done / pr.total) * 100);
+  const secs = Math.max(0, Math.round((Date.now() - new Date(pr.started_at)) / 1000));
+  const t = secs >= 60 ? `${Math.floor(secs / 60)} min ${secs % 60} s` : `${secs} s`;
+  return `<div class="progress"><div class="bar" style="width:${pctDone}%"></div></div>
+    <div class="ptext">${pr.done} de ${pr.total} picks revisados · ${pctDone} % · ${t}${pr.failed_batches ? ` · ${pr.failed_batches} lote(s) con error` : ""}</div>`;
+}
+
 function pickCard(p, i) {
   const ctx = [];
   ctx.push(`<span>${esc(fmtDate(p.kickoff))}</span>`);
@@ -65,14 +74,15 @@ function render(data) {
   }
   const an = data.analysis || {};
   if (an.status === "pending") {
-    banner += `<div class="banner ai">🧠 El analista IA (Google Antigravity) está revisando noticias y bajas de cada partido… Esta página se actualizará sola en cuanto termine.</div>`;
+    banner += `<div class="banner ai">🧠 El analista IA (Google Antigravity) está revisando noticias y bajas de cada partido…${progressBar(an.progress)}</div>`;
   } else if (an.status === "done") {
-    banner += `<div class="banner ai done">🧠 Picks revisados por el analista IA${an.source === "simulado" ? " <b>(simulado: añade GEMINI_API_KEY)</b>" : " (Google Antigravity)"}.${data.discarded?.length ? ` ${data.discarded.length} descartados.` : ""}</div>`;
+    const failed = an.progress?.failed_batches ? ` ${an.progress.failed_batches} lote(s) fallaron: esos picks aparecen "sin análisis".` : "";
+    banner += `<div class="banner ai done">🧠 Picks revisados por el analista IA${an.source === "simulado" ? " <b>(simulado: añade GEMINI_API_KEY)</b>" : " (Google Antigravity)"}.${data.discarded?.length ? ` ${data.discarded.length} descartados.` : ""}${failed}</div>`;
   } else if (an.status === "error") {
     banner += `<div class="banner warn">El analista IA ha fallado (${esc(an.error)}). Se muestran los picks sin revisar.</div>`;
   }
   clearTimeout(pollTimer);
-  if (an.status === "pending") pollTimer = setTimeout(load, 15000);
+  if (an.status === "pending") pollTimer = setTimeout(load, 5000);
 
   if (data.warnings?.length) {
     banner += `<div class="banner warn">Avisos:<ul>${data.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></div>`;
