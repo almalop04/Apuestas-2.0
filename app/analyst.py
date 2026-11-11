@@ -21,6 +21,9 @@ class Cancelled(Exception):
 
 
 TERMINAL = {"completed", "failed", "cancelled", "incomplete", "budget_exceeded", "requires_action"}
+# Pausa por límite de texto generado: se reanuda con continuation_token (ver librería google-genai)
+CONTINUE = "requires_continuation"
+MAX_CONTINUATIONS = 3
 
 PROMPT = """Eres un analista de apuestas de fútbol riguroso y escéptico.
 Tienes una lista de selecciones candidatas. Para cada una, un modelo estadístico ya ha calculado
@@ -32,6 +35,11 @@ Tu trabajo NO es recalcular probabilidades desde cero. Para CADA candidato:
    motivación (descenso, objetivos, nada en juego), cambios de entrenador, clima extremo.
 2. Decide si esa información cambia la probabilidad de la selección concreta.
 3. Si no encuentras nada relevante, el veredicto es "mantener" con ajuste 0. No inventes noticias.
+
+Límites de esfuerzo (importante, hay un tiempo máximo):
+- Como máximo 3 búsquedas por candidato y lee como mucho 2 páginas por candidato.
+- No ejecutes código ni crees archivos: no hace falta.
+- En cuanto tengas lo esencial, responde. Es mejor un "mantener" prudente que agotar el tiempo.
 
 Devuelve ÚNICAMENTE un bloque JSON válido, sin texto adicional, con este formato:
 ```json
@@ -72,36 +80,51 @@ def parse_verdicts(text: str) -> list[dict]:
     return data
 
 
-def _run_antigravity(prompt: str, s: Settings, should_stop=None) -> str:
+def _run_antigravity(prompt: str, s: Settings, should_stop=None, label: str = "") -> str:
     from google import genai  # import diferido: solo si se usa el analista
 
     # El agente solo existe en v1beta; la librería usa v1 por defecto (error 400 "only available in v1beta")
     ver = s.analyst_api_version
     client = genai.Client(api_key=s.gemini_api_key, http_options={"api_version": ver})
-    interaction = client.interactions.create(
-        agent=s.analyst_agent,
-        input=prompt,
-        environment="remote",
-        tools=[{"type": "google_search"}, {"type": "url_context"}],
-        background=True,
-        api_version=ver,
-    )
-    deadline = time.time() + s.analyst_timeout
+    base = dict(agent=s.analyst_agent, environment="remote",
+                tools=[{"type": "google_search"}, {"type": "url_context"}], background=True)
+    interaction = client.interactions.create(input=prompt, api_version=ver, **base)
+    start = time.time()
+    deadline = start + s.analyst_timeout
+    continuations = 0
+    last_logged = None
+    log.info("Antigravity %s: creado %s (%s)", label, interaction.id, interaction.status)
+
+    def stop(exc: Exception):
+        try:
+            client.interactions.cancel(interaction.id, api_version=ver)
+        except Exception:  # noqa: BLE001
+            pass
+        raise exc
+
     while interaction.status not in TERMINAL:
+        if interaction.status == CONTINUE and getattr(interaction, "continuation_token", None):
+            continuations += 1
+            if continuations > MAX_CONTINUATIONS:
+                stop(RuntimeError(f"el agente pidió continuar más de {MAX_CONTINUATIONS} veces"))
+            log.info("Antigravity %s: reanudando %s (continuación %d)", label, interaction.id, continuations)
+            interaction = client.interactions.create(
+                continuation_token=interaction.continuation_token,
+                previous_interaction_id=interaction.id, api_version=ver, **base)
+            continue
         if should_stop and should_stop():
-            try:
-                client.interactions.cancel(interaction.id, api_version=ver)
-            except Exception:  # noqa: BLE001
-                pass
-            raise Cancelled()
+            stop(Cancelled())
         if time.time() > deadline:
-            try:
-                client.interactions.cancel(interaction.id, api_version=ver)
-            except Exception:  # noqa: BLE001
-                pass
-            raise TimeoutError(f"el agente tardó más de {s.analyst_timeout:.0f} s")
+            stop(TimeoutError(f"el agente tardó más de {s.analyst_timeout:.0f} s "
+                              f"(último estado: {interaction.status})"))
+        elapsed = int(time.time() - start)
+        if (interaction.status, elapsed // 60) != last_logged:  # como mucho 1 línea por minuto o cambio de estado
+            last_logged = (interaction.status, elapsed // 60)
+            log.info("Antigravity %s: %s · %d min %02d s · id %s",
+                     label, interaction.status, elapsed // 60, elapsed % 60, interaction.id)
         time.sleep(10)
         interaction = client.interactions.get(interaction.id, api_version=ver)
+    log.info("Antigravity %s: terminado con estado %s en %d s", label, interaction.status, int(time.time() - start))
     if interaction.status != "completed":
         raise RuntimeError(f"estado del agente: {interaction.status} {interaction.errors or ''}")
     return interaction.output_text or ""
@@ -172,7 +195,8 @@ def _analyse_batch(batch: list[dict], s: Settings, today: str, should_stop=None)
         max_adj=s.analyst_max_adjust, today=today,
         candidates=json.dumps(batch, ensure_ascii=False, indent=1),
     )
-    return parse_verdicts(_run_antigravity(prompt, s, should_stop))
+    label = ",".join(c["id"] for c in batch)
+    return parse_verdicts(_run_antigravity(prompt, s, should_stop, label=label))
 
 
 def analyse(picks: list[dict], s: Settings, today: str, progress=None,

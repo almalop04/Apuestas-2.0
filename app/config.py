@@ -64,7 +64,7 @@ class Settings:
     analyst_agent: str = field(default_factory=lambda: os.getenv("ANALYST_AGENT", "antigravity-preview-05-2026"))
     analyst_candidates: int = field(default_factory=lambda: _i("ANALYST_CANDIDATES", 15))
     analyst_max_adjust: float = field(default_factory=lambda: _f("ANALYST_MAX_ADJUST", 0.03))
-    analyst_timeout: float = field(default_factory=lambda: _f("ANALYST_TIMEOUT", 900))
+    analyst_timeout: float = field(default_factory=lambda: _f("ANALYST_TIMEOUT", 1200))
     analyst_env: str = field(default_factory=lambda: os.getenv("ANALYST_ENABLED", ""))
     analyst_api_version: str = field(default_factory=lambda: os.getenv("ANALYST_API_VERSION", "v1beta"))
     analyst_batch_size: int = field(default_factory=lambda: _i("ANALYST_BATCH_SIZE", 3))

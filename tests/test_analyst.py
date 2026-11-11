@@ -161,3 +161,61 @@ def test_force_refresh_does_not_wait_for_old_analysis(monkeypatch, tmp_path):
     assert data["generated_at"] == second["generated_at"]
     assert data["analysis"]["status"] == "done"
     assert all(p["analysis"]["reason"] == "nuevo" for p in data["picks"])
+
+
+def _fake_genai(monkeypatch, script):
+    """script: lista de estados que irá devolviendo la API (create y get)."""
+    import google
+    created = []
+
+    class Inter:
+        def __init__(self, status, iid, token=None, text=None):
+            self.id, self.status, self.continuation_token, self.output_text, self.errors = iid, status, token, text, None
+
+    class Interactions:
+        def create(self, **kw):
+            created.append(kw)
+            return script.pop(0)
+
+        def get(self, _id, api_version=None):
+            return script.pop(0)
+
+        def cancel(self, _id, api_version=None):
+            created.append({"cancel": _id})
+
+    class Client:
+        def __init__(self, api_key, http_options=None):
+            self.interactions = Interactions()
+
+    fake = types.ModuleType("google.genai")
+    fake.Client = Client
+    monkeypatch.setitem(sys.modules, "google.genai", fake)
+    monkeypatch.setattr(google, "genai", fake, raising=False)
+    monkeypatch.setattr(analyst.time, "sleep", lambda _: None)
+    return Inter, created
+
+
+def test_requires_continuation_is_resumed(monkeypatch):
+    script = []
+    Inter, created = _fake_genai(monkeypatch, script)
+    ok = '[{"id":"c1","verdict":"mantener","prob_adjust":0,"reason":"ok"}]'
+    script += [Inter("in_progress", "i1"), Inter("requires_continuation", "i1", token="tok"),
+               Inter("in_progress", "i2"), Inter("completed", "i2", text=ok)]
+    s = Settings(odds_api_key="x", gemini_api_key="k")
+    out = analyst._run_antigravity("prompt", s, label="c1")
+    assert out == ok
+    assert created[1]["continuation_token"] == "tok" and created[1]["previous_interaction_id"] == "i1"
+    assert "input" not in created[1]
+
+
+def test_timeout_reports_last_status(monkeypatch):
+    script = []
+    Inter, created = _fake_genai(monkeypatch, script)
+    script += [Inter("queued", "i1")] + [Inter("queued", "i1") for _ in range(5)]
+    s = Settings(odds_api_key="x", gemini_api_key="k", analyst_timeout=0)
+    try:
+        analyst._run_antigravity("prompt", s)
+        assert False
+    except TimeoutError as e:
+        assert "último estado: queued" in str(e)
+    assert {"cancel": "i1"} in created

@@ -85,7 +85,7 @@ pytest -q
 | `ANALYST_ENABLED` | auto | `0` apaga el analista aunque haya clave |
 | `ANALYST_CANDIDATES` | 15 | Candidatos que revisa el agente |
 | `ANALYST_MAX_ADJUST` | 0.03 | Ajuste máximo de probabilidad del agente |
-| `ANALYST_TIMEOUT` | 900 | Segundos máximos de espera al agente (por lote) |
+| `ANALYST_TIMEOUT` | 1200 | Segundos máximos de espera al agente (por lote) |
 | `ANALYST_BATCH_SIZE` | 3 | Picks por llamada al agente (cada lote completado avanza la barra) |
 | `ANALYST_CONCURRENCY` | 3 | Lotes que se analizan a la vez |
 | `ANALYST_AGENT` | antigravity-preview-05-2026 | Id del agente |
