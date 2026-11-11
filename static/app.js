@@ -124,7 +124,7 @@ $("#refresh-form").addEventListener("submit", async (e) => {
   btn.disabled = true;
   btn.textContent = "Actualizando…";
   try {
-    const r = await fetch("/api/refresh", { method: "POST", headers: { "X-Refresh-Token": $("#token").value } });
+    const r = await fetch("/api/refresh", { method: "POST", headers: { "X-Refresh-Token": $("#token").value.trim() } });
     if (r.status === 401) throw new Error("token incorrecto");
     if (!r.ok) throw new Error(r.status);
     render(await r.json());
