@@ -70,6 +70,7 @@ class Settings:
     analyst_max_tokens: int = field(default_factory=lambda: _i("ANALYST_MAX_TOKENS", 0))  # 0 = sin tope
     analyst_agent_model: str = field(default_factory=lambda: os.getenv("ANALYST_AGENT_MODEL", ""))
     analyst_tools: str = field(default_factory=lambda: os.getenv("ANALYST_TOOLS", "google_search,url_context"))
+    analyst_probe_every: int = field(default_factory=lambda: _i("ANALYST_PROBE_EVERY", 300))  # 0 = sin escucha
     analyst_batch_size: int = field(default_factory=lambda: _i("ANALYST_BATCH_SIZE", 3))
     analyst_concurrency: int = field(default_factory=lambda: _i("ANALYST_CONCURRENCY", 3))
     analyst_demo_delay: float = field(default_factory=lambda: _f("ANALYST_DEMO_DELAY", 2.0))

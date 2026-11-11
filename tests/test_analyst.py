@@ -278,3 +278,30 @@ def test_describe_shows_updated_and_environment():
         environment_id = None
     d = analyst.describe(It())
     assert "updated=2026-11-11T16:25:00Z" in d and "entorno=sin asignar" in d
+
+
+def test_probe_stream_counts_events_and_handles_silence():
+    class Ev:
+        def __init__(self, t):
+            self.event_type = t
+
+    class Live:
+        def get(self, _id, stream=False, api_version=None, timeout=None):
+            assert stream is True and api_version == "v1beta"
+            return iter([Ev("interaction.created"), Ev("step.start"), Ev("step.delta"), Ev("step.delta")])
+
+    class Silent:
+        def get(self, _id, stream=False, api_version=None, timeout=None):
+            def gen():
+                raise TimeoutError("read timeout")
+                yield
+            return gen()
+
+    class C:
+        def __init__(self, inter):
+            self.interactions = inter
+
+    out = analyst.probe_stream(C(Live()), "i1", "v1beta", seconds=5)
+    assert out.startswith("step.delta=2") and "step.start=1" in out
+    out = analyst.probe_stream(C(Silent()), "i1", "v1beta", seconds=5)
+    assert out.startswith("sin eventos") and "TimeoutError" in out

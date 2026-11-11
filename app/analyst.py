@@ -107,6 +107,37 @@ def describe(interaction) -> str:
     return " · ".join(parts)
 
 
+def probe_stream(client, interaction_id: str, ver: str, seconds: float = 20) -> str:
+    """Escucha en directo los eventos del agente durante unos segundos (diagnóstico).
+
+    Devuelve un resumen: tipos de evento recibidos, o "sin eventos" si no llega nada.
+    """
+    counts: dict[str, int] = {}
+    start = time.time()
+    note = ""
+    stream = None
+    try:
+        stream = client.interactions.get(interaction_id, stream=True, api_version=ver, timeout=seconds)
+        for ev in stream:
+            t = getattr(ev, "event_type", None) or type(ev).__name__
+            counts[t] = counts.get(t, 0) + 1
+            if time.time() - start > seconds:
+                break
+    except Exception as e:  # noqa: BLE001  (un timeout de lectura = no llegó nada)
+        note = type(e).__name__
+    finally:
+        close = getattr(stream, "close", None)
+        if callable(close):
+            try:
+                close()
+            except Exception:  # noqa: BLE001
+                pass
+    if not counts:
+        return f"sin eventos en {int(time.time() - start)} s" + (f" ({note})" if note else "")
+    return ", ".join(f"{k}={v}" for k, v in sorted(counts.items(), key=lambda kv: -kv[1])) + (
+        f" · cortado por {note}" if note else "")
+
+
 def _run_antigravity(prompt: str, s: Settings, should_stop=None, label: str = "") -> str:
     from google import genai  # import diferido: solo si se usa el analista
 
@@ -129,6 +160,7 @@ def _run_antigravity(prompt: str, s: Settings, should_stop=None, label: str = ""
     deadline = start + s.analyst_timeout
     continuations = 0
     last_logged = None
+    next_probe = 90  # primera escucha en directo al minuto y medio
     log.info("Antigravity %s: creado %s (%s) · herramientas=%s · %s", label, interaction.id,
              interaction.status, s.analyst_tools or "por defecto", describe(interaction))
 
@@ -156,6 +188,9 @@ def _run_antigravity(prompt: str, s: Settings, should_stop=None, label: str = ""
             stop(TimeoutError(f"el agente tardó más de {s.analyst_timeout:.0f} s "
                               f"(último estado: {interaction.status}; {describe(interaction)})"))
         elapsed = int(time.time() - start)
+        if s.analyst_probe_every > 0 and elapsed >= next_probe:
+            next_probe = elapsed + s.analyst_probe_every
+            log.info("Antigravity %s: escucha en directo · %s", label, probe_stream(client, interaction.id, ver))
         if (interaction.status, elapsed // 60) != last_logged:  # como mucho 1 línea por minuto o cambio de estado
             last_logged = (interaction.status, elapsed // 60)
             log.info("Antigravity %s: %s · %d min %02d s · %s · id %s",
