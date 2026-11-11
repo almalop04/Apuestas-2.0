@@ -13,7 +13,11 @@ def test_refresh_token_trimmed_and_health(monkeypatch):
     assert h["refresh_token_configured"] is True
     assert h["refresh_token_fingerprint"] == hashlib.sha256(b"secreto-x").hexdigest()[:6]
     assert c.post("/api/refresh", headers={"X-Refresh-Token": " secreto-x "}).status_code == 200
-    assert c.post("/api/refresh", headers={"X-Refresh-Token": "otro"}).status_code == 401
+    r = c.post("/api/refresh", headers={"X-Refresh-Token": "otro"})
+    assert r.status_code == 401
+    d = r.json()["detail"]
+    assert d["received_length"] == 4 and d["received_fingerprint"] == hashlib.sha256(b"otro").hexdigest()[:6]
+    assert "otro" not in r.text
 
 
 def test_refresh_without_token_configured(monkeypatch):

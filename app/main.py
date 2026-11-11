@@ -48,5 +48,10 @@ def refresh(x_refresh_token: str = Header(default="")):
     s = Settings()
     expected, given = s.refresh_token.strip(), x_refresh_token.strip()
     if not expected or not hmac.compare_digest(given.encode(), expected.encode()):
-        raise HTTPException(status_code=401, detail="Token incorrecto")
+        # Solo huella y longitud de lo recibido (nunca el token), para diagnosticar autocompletados
+        raise HTTPException(status_code=401, detail={
+            "error": "Token incorrecto",
+            "received_fingerprint": _fingerprint(given) if given else None,
+            "received_length": len(given),
+        })
     return get_picks(s, force=True)

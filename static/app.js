@@ -125,7 +125,12 @@ $("#refresh-form").addEventListener("submit", async (e) => {
   btn.textContent = "Actualizando…";
   try {
     const r = await fetch("/api/refresh", { method: "POST", headers: { "X-Refresh-Token": $("#token").value.trim() } });
-    if (r.status === 401) throw new Error("token incorrecto");
+    if (r.status === 401) {
+      const d = (await r.json().catch(() => ({}))).detail || {};
+      throw new Error(d.received_length
+        ? `token incorrecto (ha llegado uno de ${d.received_length} caracteres, huella ${d.received_fingerprint}; compárala con /health)`
+        : "token incorrecto (ha llegado vacío)");
+    }
     if (!r.ok) throw new Error(r.status);
     render(await r.json());
   } catch (err) {
