@@ -118,23 +118,44 @@ async function load() {
   }
 }
 
+const refreshMsg = (text, ok) => {
+  $("#refresh-msg").className = ok ? "ok" : "err";
+  $("#refresh-msg").textContent = text;
+};
+
+// Muestra cuántos caracteres hay en el campo (sin mostrar el token): así se ve si el navegador lo ha vaciado
+$("#token").addEventListener("input", () => {
+  const n = $("#token").value.trim().length;
+  $("#token-count").textContent = n ? `${n} caracteres escritos` : "";
+});
+
 $("#refresh-form").addEventListener("submit", async (e) => {
   e.preventDefault();
+  const token = $("#token").value.trim();
+  if (!token) {
+    refreshMsg("El campo está vacío: escribe el token antes de pulsar el botón.", false);
+    return;
+  }
   const btn = e.target.querySelector("button");
   btn.disabled = true;
   btn.textContent = "Actualizando…";
+  refreshMsg(`Enviando token de ${token.length} caracteres…`, true);
   try {
-    const r = await fetch("/api/refresh", { method: "POST", headers: { "X-Refresh-Token": $("#token").value.trim() } });
+    const r = await fetch("/api/refresh", { method: "POST", headers: { "X-Refresh-Token": token } });
     if (r.status === 401) {
-      const d = (await r.json().catch(() => ({}))).detail || {};
-      throw new Error(d.received_length
-        ? `token incorrecto (ha llegado uno de ${d.received_length} caracteres, huella ${d.received_fingerprint}; compárala con /health)`
-        : "token incorrecto (ha llegado vacío)");
+      const detail = (await r.json().catch(() => ({}))).detail;
+      if (detail && typeof detail === "object") {
+        throw new Error(detail.received_length
+          ? `token incorrecto: han llegado ${detail.received_length} caracteres con huella ${detail.received_fingerprint} (compárala con /health)`
+          : "token incorrecto: al servidor ha llegado vacío");
+      }
+      throw new Error("token incorrecto (el servidor tiene una versión anterior del código: espera a que Render termine de desplegar)");
     }
-    if (!r.ok) throw new Error(r.status);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
     render(await r.json());
+    refreshMsg("✓ Actualizado. Si el analista está activo, la barra de progreso aparecerá arriba.", true);
   } catch (err) {
-    $("#banner").insertAdjacentHTML("afterbegin", `<div class="banner warn">Error al actualizar: ${esc(err.message)}</div>`);
+    refreshMsg(`Error al actualizar: ${err.message}`, false);
   } finally {
     btn.disabled = false;
     btn.textContent = "Actualizar ahora";

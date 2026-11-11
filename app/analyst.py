@@ -16,6 +16,10 @@ from .model import kelly_stake
 
 log = logging.getLogger("analyst")
 
+class Cancelled(Exception):
+    """El análisis ya no hace falta (los picks se regeneraron mientras tanto)."""
+
+
 TERMINAL = {"completed", "failed", "cancelled", "incomplete", "budget_exceeded", "requires_action"}
 
 PROMPT = """Eres un analista de apuestas de fútbol riguroso y escéptico.
@@ -68,7 +72,7 @@ def parse_verdicts(text: str) -> list[dict]:
     return data
 
 
-def _run_antigravity(prompt: str, s: Settings) -> str:
+def _run_antigravity(prompt: str, s: Settings, should_stop=None) -> str:
     from google import genai  # import diferido: solo si se usa el analista
 
     # El agente solo existe en v1beta; la librería usa v1 por defecto (error 400 "only available in v1beta")
@@ -84,6 +88,12 @@ def _run_antigravity(prompt: str, s: Settings) -> str:
     )
     deadline = time.time() + s.analyst_timeout
     while interaction.status not in TERMINAL:
+        if should_stop and should_stop():
+            try:
+                client.interactions.cancel(interaction.id, api_version=ver)
+            except Exception:  # noqa: BLE001
+                pass
+            raise Cancelled()
         if time.time() > deadline:
             try:
                 client.interactions.cancel(interaction.id, api_version=ver)
@@ -152,7 +162,9 @@ def apply_verdicts(picks: list[dict], verdicts: list[dict], s: Settings) -> tupl
     return kept[: s.num_picks], discarded
 
 
-def _analyse_batch(batch: list[dict], s: Settings, today: str) -> list[dict]:
+def _analyse_batch(batch: list[dict], s: Settings, today: str, should_stop=None) -> list[dict]:
+    if should_stop and should_stop():
+        raise Cancelled()
     if not s.gemini_api_key:
         time.sleep(s.analyst_demo_delay)  # solo para que la barra se vea en modo demo
         return _simulated(batch, s)
@@ -160,10 +172,11 @@ def _analyse_batch(batch: list[dict], s: Settings, today: str) -> list[dict]:
         max_adj=s.analyst_max_adjust, today=today,
         candidates=json.dumps(batch, ensure_ascii=False, indent=1),
     )
-    return parse_verdicts(_run_antigravity(prompt, s))
+    return parse_verdicts(_run_antigravity(prompt, s, should_stop))
 
 
-def analyse(picks: list[dict], s: Settings, today: str, progress=None) -> tuple[list[dict], list[dict], str]:
+def analyse(picks: list[dict], s: Settings, today: str, progress=None,
+            should_stop=None) -> tuple[list[dict], list[dict], str]:
     """Revisa los candidatos en lotes (en paralelo) e informa del progreso real.
 
     progress(done, total, errors) se llama cada vez que termina un lote.
@@ -180,11 +193,15 @@ def analyse(picks: list[dict], s: Settings, today: str, progress=None) -> tuple[
     if progress:
         progress(0, len(payload), errors)
     with ThreadPoolExecutor(max_workers=max(1, s.analyst_concurrency)) as pool:
-        futures = {pool.submit(_analyse_batch, b, s, today): b for b in batches}
+        futures = {pool.submit(_analyse_batch, b, s, today, should_stop=should_stop): b for b in batches}
         for fut in as_completed(futures):
             batch = futures[fut]
             try:
                 verdicts.extend(fut.result())
+            except Cancelled:
+                for f in futures:
+                    f.cancel()
+                raise
             except Exception as e:  # noqa: BLE001
                 log.warning("Lote del analista fallido: %s", e)
                 errors.append(str(e)[:200])

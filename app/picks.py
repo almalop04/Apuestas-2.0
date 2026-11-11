@@ -202,7 +202,7 @@ def _fresh(data: dict | None, s: Settings) -> bool:
     return time.time() - ts < s.cache_hours * 3600 and data.get("demo") == s.demo
 
 
-_analysis_running = False
+_analysis_running_for: str | None = None  # generated_at de los picks que se están analizando
 
 
 def _save() -> None:
@@ -214,28 +214,35 @@ def _save() -> None:
 
 def _run_analysis(snapshot_id: str, pool: list[dict], s: Settings) -> None:
     """Hilo en segundo plano: el agente revisa los candidatos y actualiza la caché."""
-    global _analysis_running
+    global _analysis_running_for
     started = datetime.now(timezone.utc).isoformat()
+
+    def outdated() -> bool:
+        return not _cache or _cache["generated_at"] != snapshot_id
 
     def progress(done: int, total: int, errors: list[str]) -> None:
         with _lock:
-            if _cache and _cache["generated_at"] == snapshot_id:
+            if not outdated():
                 _cache["analysis"]["progress"] = {
                     "done": done, "total": total, "failed_batches": len(errors), "started_at": started,
                 }
 
     try:
         kept, discarded, source = analyst.analyse(
-            pool, s, datetime.now(timezone.utc).date().isoformat(), progress=progress)
+            pool, s, datetime.now(timezone.utc).date().isoformat(), progress=progress, should_stop=outdated)
         result = {"status": "done", "source": source, "error": None}
+    except analyst.Cancelled:
+        log.info("Análisis cancelado: los picks se regeneraron")
+        kept, discarded, result = None, [], None
     except Exception as e:  # noqa: BLE001
         log.exception("Fallo del analista")
         kept, discarded = None, []
         result = {"status": "error", "source": None, "error": str(e)[:300]}
     with _lock:
-        _analysis_running = False
-        if not _cache or _cache["generated_at"] != snapshot_id:
-            return  # los picks se regeneraron mientras tanto
+        if _analysis_running_for == snapshot_id:
+            _analysis_running_for = None
+        if result is None or outdated():
+            return  # los picks se regeneraron mientras tanto: este resultado ya no sirve
         result["progress"] = _cache["analysis"].get("progress")
         _cache["analysis"] = result
         if kept is not None:
@@ -245,12 +252,16 @@ def _run_analysis(snapshot_id: str, pool: list[dict], s: Settings) -> None:
 
 
 def _maybe_start_analysis(s: Settings) -> None:
-    global _analysis_running
-    if _cache and _cache.get("analysis", {}).get("status") == "pending" and not _analysis_running:
-        _analysis_running = True
-        threading.Thread(
-            target=_run_analysis, args=(_cache["generated_at"], list(_cache["pool"]), s), daemon=True
-        ).start()
+    """Arranca el análisis de los picks actuales si está pendiente y no hay ya uno en marcha PARA ELLOS.
+    Si hay uno en marcha para picks antiguos, ese se cancela solo (should_stop) y no bloquea al nuevo."""
+    global _analysis_running_for
+    if not _cache or _cache.get("analysis", {}).get("status") != "pending":
+        return
+    snapshot_id = _cache["generated_at"]
+    if _analysis_running_for == snapshot_id:
+        return
+    _analysis_running_for = snapshot_id
+    threading.Thread(target=_run_analysis, args=(snapshot_id, list(_cache["pool"]), s), daemon=True).start()
 
 
 def get_picks(s: Settings, force: bool = False) -> dict:

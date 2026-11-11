@@ -94,7 +94,7 @@ def test_progress_by_batches_and_partial_failure(monkeypatch):
     s = Settings(odds_api_key="x", gemini_api_key="k", analyst_batch_size=2, analyst_concurrency=1)
     ps = [_pick(edge=0.08 - i * 0.001) for i in range(5)]  # 5 picks -> lotes de 2, 2, 1
 
-    def fake_batch(batch, s_, today):
+    def fake_batch(batch, s_, today, should_stop=None):
         if batch[0]["id"] == "c3":
             raise RuntimeError("timeout")
         return [{"id": c["id"], "verdict": "mantener", "prob_adjust": 0, "reason": "ok"} for c in batch]
@@ -109,7 +109,7 @@ def test_progress_by_batches_and_partial_failure(monkeypatch):
 
 def test_all_batches_failed_raises(monkeypatch):
     s = Settings(odds_api_key="x", gemini_api_key="k", analyst_batch_size=2)
-    monkeypatch.setattr(analyst, "_analyse_batch", lambda b, s_, t: (_ for _ in ()).throw(RuntimeError("caído")))
+    monkeypatch.setattr(analyst, "_analyse_batch", lambda b, s_, t, should_stop=None: (_ for _ in ()).throw(RuntimeError("caído")))
     try:
         analyst.analyse([_pick(), _pick()], s, "2026-11-11")
         assert False
@@ -125,3 +125,39 @@ def test_real_sdk_routes_interactions_to_v1beta():
     fixed = genai.Client(api_key="x", http_options={"api_version": "v1beta"})
     assert get_google_genai_api_version(default._api_client) == "v1"
     assert get_google_genai_api_version(fixed._api_client) == "v1beta"
+
+
+def test_force_refresh_does_not_wait_for_old_analysis(monkeypatch, tmp_path):
+    """Reproduce el fallo: análisis viejo colgado + forzar actualización -> el nuevo debe arrancar ya."""
+    import threading as th
+    monkeypatch.setattr(picks, "CACHE_FILE", tmp_path / "c.json")
+    monkeypatch.setattr(picks, "_cache", None)
+    monkeypatch.setattr(picks, "_analysis_running_for", None)
+    release_old = th.Event()
+    calls = []
+
+    def fake_batch(batch, s_, today, should_stop=None):
+        calls.append(today)
+        if len(calls) == 1:  # el primer análisis se "cuelga" hasta que lo cancelan
+            while not should_stop():
+                time.sleep(0.01)
+            release_old.set()
+            raise analyst.Cancelled()
+        return [{"id": c["id"], "verdict": "mantener", "prob_adjust": 0, "reason": "nuevo"} for c in batch]
+
+    monkeypatch.setattr(analyst, "_analyse_batch", fake_batch)
+    s = Settings(odds_api_key="", demo_env="1", max_odds=5.0, min_prob=0.0, max_model_gap=1.0,
+                 analyst_batch_size=50, analyst_concurrency=1)
+    picks.get_picks(s, force=True)           # arranca el análisis 1 (se cuelga)
+    time.sleep(0.05)
+    time.sleep(0.01)
+    second = picks.get_picks(s, force=True)  # forzar actualización: nuevos picks
+    assert release_old.wait(2), "el análisis viejo debía cancelarse"
+    for _ in range(100):
+        data = picks.get_picks(s)
+        if data["analysis"]["status"] == "done":
+            break
+        time.sleep(0.02)
+    assert data["generated_at"] == second["generated_at"]
+    assert data["analysis"]["status"] == "done"
+    assert all(p["analysis"]["reason"] == "nuevo" for p in data["picks"])

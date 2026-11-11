@@ -104,3 +104,7 @@ button:disabled { opacity: 0.5; cursor: wait; }
   .numbers { grid-column: 1 / -1; text-align: left; grid-template-columns: repeat(3, 1fr); }
   .meta { text-align: left; }
 }
+
+#refresh-msg { font-size: 13px; margin: 8px 0 0; }
+#refresh-msg.ok { color: var(--accent); }
+#refresh-msg.err { color: var(--loss); }
