@@ -80,6 +80,27 @@ def parse_verdicts(text: str) -> list[dict]:
     return data
 
 
+def describe(interaction) -> str:
+    """Resumen de lo que ha hecho el agente: pasos por tipo, último paso y tokens."""
+    steps = getattr(interaction, "steps", None) or []
+    counts: dict[str, int] = {}
+    for st in steps:
+        t = getattr(st, "type", None) or type(st).__name__
+        counts[t] = counts.get(t, 0) + 1
+    parts = [f"{len(steps)} pasos"]
+    if counts:
+        parts.append(", ".join(f"{k}={v}" for k, v in sorted(counts.items(), key=lambda kv: -kv[1])))
+        last = steps[-1]
+        last_t = getattr(last, "type", None) or type(last).__name__
+        summary = getattr(last, "summary", None)
+        parts.append(f"último={last_t}" + (f" ({str(summary)[:80]})" if summary else ""))
+    usage = getattr(interaction, "usage", None)
+    total = getattr(usage, "total_tokens", None) if usage else None
+    if total is not None:
+        parts.append(f"tokens={total}")
+    return " · ".join(parts)
+
+
 def _run_antigravity(prompt: str, s: Settings, should_stop=None, label: str = "") -> str:
     from google import genai  # import diferido: solo si se usa el analista
 
@@ -88,6 +109,13 @@ def _run_antigravity(prompt: str, s: Settings, should_stop=None, label: str = ""
     client = genai.Client(api_key=s.gemini_api_key, http_options={"api_version": ver})
     base = dict(agent=s.analyst_agent, environment="remote",
                 tools=[{"type": "google_search"}, {"type": "url_context"}], background=True)
+    agent_config = {"type": "antigravity"}
+    if s.analyst_max_tokens > 0:
+        agent_config["max_total_tokens"] = s.analyst_max_tokens  # tope de tokens de toda la ejecución
+    if s.analyst_agent_model:
+        agent_config["model"] = s.analyst_agent_model
+    if len(agent_config) > 1:
+        base["agent_config"] = agent_config
     interaction = client.interactions.create(input=prompt, api_version=ver, **base)
     start = time.time()
     deadline = start + s.analyst_timeout
@@ -115,16 +143,20 @@ def _run_antigravity(prompt: str, s: Settings, should_stop=None, label: str = ""
         if should_stop and should_stop():
             stop(Cancelled())
         if time.time() > deadline:
+            log.warning("Antigravity %s: tiempo agotado · %s", label, describe(interaction))
             stop(TimeoutError(f"el agente tardó más de {s.analyst_timeout:.0f} s "
-                              f"(último estado: {interaction.status})"))
+                              f"(último estado: {interaction.status}; {describe(interaction)})"))
         elapsed = int(time.time() - start)
         if (interaction.status, elapsed // 60) != last_logged:  # como mucho 1 línea por minuto o cambio de estado
             last_logged = (interaction.status, elapsed // 60)
-            log.info("Antigravity %s: %s · %d min %02d s · id %s",
-                     label, interaction.status, elapsed // 60, elapsed % 60, interaction.id)
+            log.info("Antigravity %s: %s · %d min %02d s · %s · id %s",
+                     label, interaction.status, elapsed // 60, elapsed % 60, describe(interaction), interaction.id)
         time.sleep(10)
         interaction = client.interactions.get(interaction.id, api_version=ver)
-    log.info("Antigravity %s: terminado con estado %s en %d s", label, interaction.status, int(time.time() - start))
+    log.info("Antigravity %s: terminado con estado %s en %d s · %s",
+             label, interaction.status, int(time.time() - start), describe(interaction))
+    if interaction.status == "budget_exceeded":
+        raise RuntimeError(f"el agente agotó el límite de tokens (ANALYST_MAX_TOKENS={s.analyst_max_tokens})")
     if interaction.status != "completed":
         raise RuntimeError(f"estado del agente: {interaction.status} {interaction.errors or ''}")
     return interaction.output_text or ""

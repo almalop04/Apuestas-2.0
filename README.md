@@ -89,6 +89,8 @@ pytest -q
 | `ANALYST_BATCH_SIZE` | 3 | Picks por llamada al agente (cada lote completado avanza la barra) |
 | `ANALYST_CONCURRENCY` | 3 | Lotes que se analizan a la vez |
 | `ANALYST_AGENT` | antigravity-preview-05-2026 | Id del agente |
+| `ANALYST_MAX_TOKENS` | 0 (sin tope) | Límite de tokens de cada ejecución del agente |
+| `ANALYST_AGENT_MODEL` | (el del agente) | Modelo con el que razona el agente |
 | `ANALYST_API_VERSION` | v1beta | Versión de la API de Gemini (el agente solo existe en v1beta) |
 
 ## Estructura

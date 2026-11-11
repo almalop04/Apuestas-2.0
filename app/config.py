@@ -67,6 +67,8 @@ class Settings:
     analyst_timeout: float = field(default_factory=lambda: _f("ANALYST_TIMEOUT", 1200))
     analyst_env: str = field(default_factory=lambda: os.getenv("ANALYST_ENABLED", ""))
     analyst_api_version: str = field(default_factory=lambda: os.getenv("ANALYST_API_VERSION", "v1beta"))
+    analyst_max_tokens: int = field(default_factory=lambda: _i("ANALYST_MAX_TOKENS", 0))  # 0 = sin tope
+    analyst_agent_model: str = field(default_factory=lambda: os.getenv("ANALYST_AGENT_MODEL", ""))
     analyst_batch_size: int = field(default_factory=lambda: _i("ANALYST_BATCH_SIZE", 3))
     analyst_concurrency: int = field(default_factory=lambda: _i("ANALYST_CONCURRENCY", 3))
     analyst_demo_delay: float = field(default_factory=lambda: _f("ANALYST_DEMO_DELAY", 2.0))

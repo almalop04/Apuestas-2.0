@@ -219,3 +219,39 @@ def test_timeout_reports_last_status(monkeypatch):
     except TimeoutError as e:
         assert "último estado: queued" in str(e)
     assert {"cancel": "i1"} in created
+
+
+def test_describe_steps_and_tokens():
+    class St:
+        def __init__(self, t, summary=None):
+            self.type, self.summary = t, summary
+
+    class U:
+        total_tokens = 12345
+
+    class It:
+        steps = [St("thought"), St("google_search_call"), St("google_search_result"),
+                 St("google_search_call"), St("thought", "Revisando bajas del Tottenham")]
+        usage = U()
+
+    d = analyst.describe(It())
+    assert d.startswith("5 pasos") and "google_search_call=2" in d and "thought=2" in d
+    assert "último=thought (Revisando bajas del Tottenham)" in d and "tokens=12345" in d
+    assert analyst.describe(object()) == "0 pasos"
+
+
+def test_agent_config_sent_only_when_set(monkeypatch):
+    script = []
+    Inter, created = _fake_genai(monkeypatch, script)
+    ok = '[{"id":"c1","verdict":"mantener","prob_adjust":0,"reason":"ok"}]'
+    script += [Inter("completed", "i1", text=ok), Inter("completed", "i2", text=ok)]
+    analyst._run_antigravity("p", Settings(odds_api_key="x", gemini_api_key="k"))
+    assert "agent_config" not in created[0]
+    analyst._run_antigravity("p", Settings(odds_api_key="x", gemini_api_key="k", analyst_max_tokens=200000))
+    assert created[1]["agent_config"] == {"type": "antigravity", "max_total_tokens": 200000}
+
+
+def test_real_sdk_accepts_antigravity_agent_config():
+    from google.genai._gaos.types.interactions.antigravityagentconfig import AntigravityAgentConfig
+    cfg = AntigravityAgentConfig(**{"type": "antigravity", "max_total_tokens": 200000, "model": "x"})
+    assert cfg.max_total_tokens == 200000
